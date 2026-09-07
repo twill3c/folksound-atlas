@@ -152,6 +152,165 @@ th { color: var(--ink-2); font-weight: 600; }
 /* 広い表・図は自分の中で横スクロールさせ、本文を横に溢れさせない */
 .scrollx { overflow-x: auto; }
 
+/* ---- 世界地図 ---- */
+.worldmap__svg { width: 100%; min-width: 640px; height: auto; display: block; }
+.worldmap__sea { fill: #e7eef0; }
+.worldmap__land { fill: #dcd6c6; stroke: #c3baa5; stroke-width: 0.4; }
+.worldmap__pin circle {
+  fill: var(--aco);
+  fill-opacity: 0.62;
+  stroke: #fff;
+  stroke-width: 1.1;
+  cursor: pointer;
+  transition: fill-opacity 0.12s;
+}
+.worldmap__pin:hover circle, .worldmap__pin.is-on circle {
+  fill-opacity: 0.95;
+  stroke-width: 1.8;
+}
+.worldmap__pin.is-dim circle { fill-opacity: 0.16; }
+.worldmap__label {
+  font-size: 10px;
+  fill: var(--ink-2);
+  paint-order: stroke;
+  stroke: #f5f1e8;
+  stroke-width: 2.5px;
+  pointer-events: none;
+}
+.worldmap__caption { font-size: 13px; color: var(--ink-2); margin: 8px 0 0; }
+
+/* ---- 地図の脇の一覧 ---- */
+.mapx {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) 1fr;
+  gap: 22px;
+  margin-top: 24px;
+}
+.mapx__col--wide { min-width: 0; }
+.mapx__h { font-size: 15px; margin: 0 0 10px; }
+.mapx__countries { list-style: none; margin: 0; padding: 0; max-height: 460px; overflow-y: auto; }
+.mapx__countries button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 6px 4px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+.mapx__countries button:hover { background: var(--paper-2); }
+.mapx__countries button.is-on { background: var(--geo-soft); font-weight: 600; }
+.mapx__songs { list-style: none; margin: 0; padding: 0; max-height: 460px; overflow-y: auto; }
+.mapx__songs li { padding: 6px 2px; border-bottom: 1px solid var(--rule); }
+.mapx__songs a { display: block; font-size: 14px; }
+.mapx__songs a.is-on { color: var(--aco); font-weight: 600; }
+.mapx__meta { display: block; font-size: 12px; color: var(--ink-3); }
+
+@media (max-width: 720px) {
+  .mapx { grid-template-columns: 1fr; }
+}
+
+/* ---- 音響空間 ---- */
+.soundspace__svg { width: 100%; min-width: 560px; height: auto; display: block; }
+.soundspace__bg { fill: #fffdf8; stroke: var(--rule); }
+.soundspace__pt { cursor: pointer; fill-opacity: 0.78; stroke: #fff; stroke-width: 0.8; }
+.soundspace__pt.is-on { fill-opacity: 1; stroke-width: 1.8; stroke: var(--ink); }
+.soundspace__pt.is-dim { fill-opacity: 0.14; }
+.soundspace__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.soundspace__key { display: inline-flex; align-items: center; gap: 5px; }
+.soundspace__key i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.soundspace__hint { font-size: 13px; color: var(--ink-2); margin: 8px 0 0; min-height: 1.5em; }
+
+/* ---- 操作卓 ---- */
+.controls { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 16px; }
+.controls__group { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.controls__label { font-size: 12px; color: var(--ink-3); margin-right: 2px; }
+.controls button {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 11px;
+  border: 1px solid var(--rule-2);
+  background: #fffdf8;
+  color: var(--ink-2);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.controls button:hover { background: var(--paper-2); color: var(--ink); }
+.controls button.is-on {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.controls button.is-on .tag { filter: brightness(1.9); }
+
+.warnbox {
+  border: 1px solid #d8c489;
+  background: var(--warn-soft);
+  color: #5d4a12;
+  padding: 10px 14px;
+  border-radius: 3px;
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+
+.modelcard {
+  margin-top: 18px;
+  display: grid;
+  gap: 8px 22px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  font-size: 13.5px;
+}
+.modelcard dt { color: var(--ink-3); font-size: 12px; }
+.modelcard dd { margin: 2px 0 0; }
+
+/* ---- 曲の詳細 ---- */
+.panel {
+  border-top: 1px solid var(--rule);
+  padding-top: 18px;
+  margin-top: 26px;
+}
+.panel h2 { font-size: 17px; margin: 0 0 12px; }
+.panel__sub { font-size: 14px; margin: 0 0 6px; font-weight: 600; }
+.player { width: 100%; max-width: 520px; }
+
+.wave { width: 100%; min-width: 520px; height: auto; display: block; }
+.wave__bg { fill: #fffdf8; stroke: var(--rule); }
+.wave__line { stroke: var(--aco); stroke-width: 1; opacity: 0.85; }
+.wave__axis { stroke: var(--rule-2); stroke-width: 0.6; }
+.wave__tick { font-size: 10px; fill: var(--ink-3); }
+
+.ftable { font-size: 13.5px; }
+.ftable th { white-space: nowrap; }
+
+.neighbours { list-style: decimal; padding-left: 22px; margin: 0; font-size: 14px; }
+.neighbours li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.neighbours__country { color: var(--ink-3); font-size: 12.5px; }
+
+.prov { display: grid; gap: 8px 20px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); font-size: 13.5px; }
+.prov dt { color: var(--ink-3); font-size: 12px; }
+.prov dd { margin: 2px 0 0; word-break: break-word; }
+.mono-sm { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+
 /* ---- フッタ(フリート共通・下部固定) ---- */
 .site-footer {
   position: fixed;

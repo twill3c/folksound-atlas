@@ -13,6 +13,7 @@ from folksound.preprocess import (
     HOP_SECONDS,
     SEGMENT_SECONDS,
     TARGET_SR,
+    sample_segments,
     segment_signal,
     to_mono,
 )
@@ -92,6 +93,39 @@ def test_short_signal_is_padded_to_one_segment():
 @pytest.mark.unit
 def test_empty_signal_yields_no_segments():
     assert segment_signal(np.zeros(0, dtype=np.float32), TARGET_SR) == []
+
+
+@pytest.mark.unit
+def test_sample_segments_returns_everything_when_under_the_cap():
+    segs = [{"index": i} for i in range(5)]
+    assert sample_segments(segs, 12) == segs
+
+
+@pytest.mark.unit
+def test_sample_segments_caps_the_count():
+    segs = [{"index": i} for i in range(70)]
+    assert len(sample_segments(segs, 12)) == 12
+
+
+@pytest.mark.unit
+def test_sample_segments_spans_the_whole_recording():
+    """先頭から N 件ではなく、**全体に散らして**取ること。
+
+    先頭から取ると、長い録音では最初の 30 秒しか見ないことになる。
+    ここでは (a) 最初と最後を含むこと (b) 後半からも取ること で押さえる。
+    """
+    segs = [{"index": i} for i in range(70)]
+    picked = [s["index"] for s in sample_segments(segs, 12)]
+    assert picked[0] == 0
+    assert picked[-1] == 69
+    assert sum(1 for i in picked if i >= 35) >= 5, f"後半が薄い: {picked}"
+
+
+@pytest.mark.unit
+def test_sample_segments_is_ordered_and_unique():
+    picked = [s["index"] for s in sample_segments([{"index": i} for i in range(51)], 10)]
+    assert picked == sorted(picked)
+    assert len(set(picked)) == len(picked)
 
 
 @pytest.mark.unit

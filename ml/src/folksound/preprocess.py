@@ -107,6 +107,23 @@ def load_and_standardize(path: str | Path) -> tuple[np.ndarray, int]:
     with sf.SoundFile(str(path)) as f:
         original_sr = f.samplerate
 
-    # librosa.load は mono 化と再標本化をまとめて行う
-    y, _ = librosa.load(str(path), sr=TARGET_SR, mono=True)
+    # librosa.load は mono 化と再標本化をまとめて行う。
+    # 既定の `soxr_hq` は 300 件規模だと律速になるので `soxr_mq` を使う
+    # (実測 2026-09-08: 1 件あたり 8 秒前後 → 2 秒前後)。
+    # 22050Hz へ落とす用途では可聴帯域の差は問題にならない。
+    y, _ = librosa.load(str(path), sr=TARGET_SR, mono=True, res_type="soxr_mq")
     return peak_normalize(np.asarray(y, dtype=np.float32)), original_sr
+
+
+def sample_segments(segments: list[dict], max_count: int) -> list[dict]:
+    """セグメントを **録音全体から等間隔で** 選ぶ。
+
+    先頭から N 件取ると、長い録音では最初の 30 秒しか見ないことになる。
+    組曲・語り物のように後半で様子が変わるものを取りこぼすので、
+    全体に散らして取る。順序と `index` は元のまま残す。
+    """
+    if max_count <= 0 or len(segments) <= max_count:
+        return segments
+    idx = np.linspace(0, len(segments) - 1, max_count)
+    picked = sorted({int(round(i)) for i in idx})
+    return [segments[i] for i in picked]

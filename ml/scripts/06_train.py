@@ -96,7 +96,7 @@ def train_autoencoder(train_items, meldir, epochs, batch, lr, device) -> FolkCNN
             loss = lossf(out, x)
             loss.backward()
             opt.step()
-            tot += float(loss) * x.size(0)
+            tot += float(loss.detach()) * x.size(0)
             n += x.size(0)
         print(f"  [AE] epoch {ep + 1}/{epochs}  recon MSE {tot / max(n, 1):.5f}", flush=True)
     return model
@@ -120,7 +120,7 @@ def train_classifier(train_items, val_items, meldir, labels, epochs, batch, lr, 
             loss = lossf(model(x), y)
             loss.backward()
             opt.step()
-            tot += float(loss) * x.size(0)
+            tot += float(loss.detach()) * x.size(0)
             n += x.size(0)
         model.eval()
         correct, seen = 0, 0
@@ -141,15 +141,21 @@ def main() -> int:
     ap.add_argument("--selected", type=Path, default=root / "data" / "raw" / "selected.json")
     ap.add_argument("--meldir", type=Path, default=root / "data" / "normalized" / "mels")
     ap.add_argument("--outdir", type=Path, default=root / "ml" / "models")
-    ap.add_argument("--epochs-ae", type=int, default=12)
-    ap.add_argument("--epochs-clf", type=int, default=12)
-    ap.add_argument("--batch", type=int, default=32)
-    ap.add_argument("--lr", type=float, default=1e-3)
+    # CPU 学習なので回数は控えめにする。実測 2026-09-08: この機で AE は 1 エポック
+    # 5〜6 分かかり、12 エポックだと AE だけで 1 時間を超えた。
+    # ここで作る Embedding は**空間どうしを見比べる**ためのもので、
+    # 最高精度を狙うものではないため、回数を落として速さを取る。
+    ap.add_argument("--epochs-ae", type=int, default=6)
+    ap.add_argument("--epochs-clf", type=int, default=6)
+    ap.add_argument("--batch", type=int, default=64)
+    ap.add_argument("--lr", type=float, default=1.5e-3)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--threads", type=int, default=6)
     args = ap.parse_args()
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
+    torch.set_num_threads(args.threads)
     device = "cpu"
 
     sel = json.loads(args.selected.read_text(encoding="utf-8"))["records"]
