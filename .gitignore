@@ -1,0 +1,40 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Node / Next.js(サイトはリポジトリ直下に置いている)
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Audio and derived data — never commit bulk media (SPEC §12 / 仕様書 §72)
+data/raw/**
+!data/raw/.gitkeep
+data/normalized/**
+!data/normalized/.gitkeep
+data/features/**
+!data/features/.gitkeep
+data/embeddings/**
+!data/embeddings/.gitkeep
+
+# Model checkpoints
+ml/models/**
+!ml/models/.gitkeep
+
+# 監査証跡は commit する。**音源は commit しない**が、
+# 「何を候補にし、どの権利判定で、どの座標を与えたか」は残す。
+# metadata.json(6.8MB)だけは大きいので、要約(rights_summary.json)を代わりに置く。
+!data/raw/discovered.json
+!data/raw/country_coords.json
+!data/raw/rights_summary.json
+!data/raw/selected.json
+!data/exports/**
+
+# OS
+Thumbs.db
+.DS_Store

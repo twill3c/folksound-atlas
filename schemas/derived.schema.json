@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://folksound-atlas/schemas/derived.schema.json",
+  "title": "features / embeddings / umap / similarity の共通スキーマ",
+  "$defs": {
+    "features_file": {
+      "type": "object",
+      "required": ["feature_version", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "feature_version": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/feature_row" } }
+      }
+    },
+    "feature_row": {
+      "type": "object",
+      "required": ["id", "rms", "zcr", "spectral_centroid", "spectral_bandwidth",
+                   "spectral_rolloff", "spectral_contrast", "mfcc", "chroma", "tempo"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^folk_[0-9]{6}$" },
+        "rms": { "type": "number" },
+        "zcr": { "type": "number" },
+        "spectral_centroid": { "type": "number" },
+        "spectral_bandwidth": { "type": "number" },
+        "spectral_rolloff": { "type": "number" },
+        "spectral_contrast": { "type": "array", "items": { "type": "number" } },
+        "mfcc": { "type": "array", "minItems": 40, "maxItems": 40, "items": { "type": "number" } },
+        "chroma": { "type": "array", "minItems": 12, "maxItems": 12, "items": { "type": "number" } },
+        "tempo": { "type": "number" }
+      }
+    },
+
+    "embeddings_file": {
+      "type": "object",
+      "required": ["model", "dimension", "l2_normalized", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "model": { "type": "string" },
+        "dimension": { "type": "integer", "exclusiveMinimum": 0 },
+        "l2_normalized": { "const": true },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "embedding"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^folk_[0-9]{6}$" },
+              "embedding": { "type": "array", "items": { "type": "number" } }
+            }
+          }
+        }
+      }
+    },
+
+    "umap_file": {
+      "type": "object",
+      "required": ["model", "method", "params", "random_state", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "model": { "type": "string" },
+        "method": { "type": "string", "enum": ["umap", "pca"] },
+        "params": { "type": "object" },
+        "random_state": { "type": "integer" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "x", "y"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^folk_[0-9]{6}$" },
+              "x": { "type": "number" },
+              "y": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+
+    "similarity_file": {
+      "type": "object",
+      "required": ["model", "top_n", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "model": { "type": "string" },
+        "top_n": { "type": "integer", "exclusiveMinimum": 0 },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "similar"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^folk_[0-9]{6}$" },
+              "similar": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "score"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": { "type": "string", "pattern": "^folk_[0-9]{6}$" },
+                    "score": { "type": "number", "minimum": -1, "maximum": 1 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
