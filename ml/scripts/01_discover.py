@@ -26,7 +26,12 @@ import urllib.request
 from pathlib import Path
 
 API = "https://commons.wikimedia.org/w/api.php"
-UA = "FolkSoundAtlas/0.1 (research; https://github.com/; contact via repo)"
+# Wikimedia の UA 方針(実在の連絡先を出す)。HC-204 / loop_001 の実測を参照。
+UA = (
+    "FolkSoundAtlas/0.1 "
+    "(https://github.com/twill3c/folksound-atlas; research dataset builder) "
+    "python-urllib"
+)
 
 AUDIO_EXT = (".ogg", ".oga", ".wav", ".flac", ".mp3", ".opus", ".m4a")
 

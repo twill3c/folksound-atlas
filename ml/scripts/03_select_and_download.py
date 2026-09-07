@@ -27,15 +27,44 @@ import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from folksound.countries import canonical_country  # noqa: E402
 from folksound.preprocess import sha256_of  # noqa: E402
 
-UA = "FolkSoundAtlas/0.1 (research; contact via repo)"
+# Wikimedia の User-Agent 方針は「クライアント名/版 + 連絡先」を求める。
+# 連絡先は**リポジトリの URL**を出す(要求されていない相手にメールアドレスを送らない)。
+# 実測 2026-09-07: 連絡先が実在の URL でない UA だと upload.wikimedia.org が
+# 早い段階で 429 を返し、600 秒の待機を指示してきた。
+UA = (
+    "FolkSoundAtlas/0.1 "
+    "(https://github.com/twill3c/folksound-atlas; research dataset builder) "
+    "python-urllib"
+)
 
 
-def select(records: list[dict], per_country: int, min_per_country: int, seed: int) -> list[dict]:
-    ok = [r for r in records if r.get("rights_allowed") and r.get("url")]
+def select(
+    records: list[dict],
+    per_country: int,
+    min_per_country: int,
+    seed: int,
+    min_bytes: int = 20_000,
+    max_bytes: int = 40_000_000,
+) -> list[dict]:
+    """権利 OK の中から、国ごとに上限まで無作為に採る。
+
+    大きさで絞る理由(**偏るので、偏り方を書いておく**):
+      Commons には「LP の片面まるごと」「1 時間の実演」のような長尺録音があり、
+      最大 1,172 MB の音源が実在する(実測 2026-09-07)。全部取ると 5.4 GB になるうえ、
+      1 本から数千セグメントが出て学習が**その 1 本に支配される**。
+      上限を置くのは通信量の都合だけでなく、標本の偏りを抑えるためでもある。
+      **その代わり長尺の演奏形式(組曲・語り物)が落ちる**。これは承知のうえの限定である。
+      下限は、壊れた・実質空のファイルを避けるために置く。
+    """
+    usable = [r for r in records if r.get("rights_allowed") and r.get("url")]
     by_country: dict[str, list[dict]] = {}
-    for r in ok:
+    for r in usable:
+        # 正規化した国名で束ねる。しないと 'Italy' と 'Italia' が別枠になり、
+        # イタリアだけ上限の 2 倍取れてしまう(SPEC §5.4)
+        r["country"] = canonical_country(r["country"])
         by_country.setdefault(r["country"], []).append(r)
 
     rng = random.Random(seed)
@@ -43,31 +72,64 @@ def select(records: list[dict], per_country: int, min_per_country: int, seed: in
     for country, rows in sorted(by_country.items()):
         if len(rows) < min_per_country:
             continue
-        rows = sorted(rows, key=lambda r: r["file"])  # 入力順に依存させない
-        rng.shuffle(rows)
-        chosen += rows[:per_country]
+        in_range = [
+            r for r in rows if min_bytes <= (r.get("size") or 0) <= max_bytes
+        ]
+        if in_range:
+            pool = sorted(in_range, key=lambda r: r["file"])  # 入力順に依存させない
+            rng.shuffle(pool)
+            picked = pool[:per_country]
+        else:
+            # **大きさを理由に国を落とさない。** 範囲内が一つも無い国は、
+            # いちばん小さいものを 1 件だけ採り、そのことを記録する。
+            # 国を落とすと地理の網が欠け、H-01 の標本が「取りやすかった国」に寄る。
+            smallest = min(rows, key=lambda r: (r.get("size") or 0) or 1 << 62)
+            smallest = {**smallest, "oversize_fallback": True}
+            picked = [smallest]
+        chosen += picked
     return sorted(chosen, key=lambda r: (r["country"], r["file"]))
 
 
-def download(url: str, dest: Path, tries: int = 4) -> bool:
+def download(url: str, dest: Path, tries: int = 8) -> bool:
+    """音源を 1 件取る。
+
+    `upload.wikimedia.org` は API とは **別枠の、より厳しい**制限を持つ
+    (実測 2026-09-07: 0.3 秒間隔で 6 件目から 429 が連続した)。
+    429 は失敗ではなく「待て」の指示なので、`Retry-After` を読んで待ち、
+    無ければ指数バックオフする。**429 を通常の例外と同じ短い再試行で扱わない。**
+    """
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    backoff = 3.0
+    backoff = 10.0
     for attempt in range(tries):
         try:
-            with urllib.request.urlopen(req, timeout=180) as r, open(dest, "wb") as f:
+            with urllib.request.urlopen(req, timeout=300) as r, open(dest, "wb") as f:
                 while True:
                     b = r.read(1 << 16)
                     if not b:
                         break
                     f.write(b)
             return True
-        except Exception as e:  # noqa: BLE001
+        except urllib.error.HTTPError as e:
+            dest.unlink(missing_ok=True)
+            if e.code == 429:
+                ra = e.headers.get("Retry-After")
+                wait = float(ra) if ra and str(ra).isdigit() else backoff
+                print(f"    429 -> {wait:.0f}s 待機", flush=True)
+                time.sleep(wait)
+                backoff = min(backoff * 2, 300)
+                continue
             if attempt == tries - 1:
-                print(f"    FAIL {url}: {e}", flush=True)
-                dest.unlink(missing_ok=True)
+                print(f"    FAIL[{e.code}] {url[:90]}", flush=True)
                 return False
             time.sleep(backoff)
-            backoff = min(backoff * 2, 30)
+            backoff = min(backoff * 2, 120)
+        except Exception as e:  # noqa: BLE001
+            dest.unlink(missing_ok=True)
+            if attempt == tries - 1:
+                print(f"    FAIL {url[:90]}: {e}", flush=True)
+                return False
+            time.sleep(backoff)
+            backoff = min(backoff * 2, 120)
     return False
 
 
@@ -80,12 +142,20 @@ def main() -> int:
     ap.add_argument("--per-country", type=int, default=20)
     ap.add_argument("--min-per-country", type=int, default=2)
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--delay", type=float, default=0.5)
+    ap.add_argument("--min-bytes", type=int, default=20_000)
+    ap.add_argument("--max-bytes", type=int, default=40_000_000)
+    # upload.wikimedia.org は API より厳しい。既定を余裕のある間隔にする(HC-204)
+    ap.add_argument("--delay", type=float, default=2.0)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     meta = json.loads(args.inp.read_text(encoding="utf-8"))
-    chosen = select(meta["records"], args.per_country, args.min_per_country, args.seed)
+    chosen = select(
+        meta["records"], args.per_country, args.min_per_country, args.seed,
+        min_bytes=args.min_bytes, max_bytes=args.max_bytes,
+    )
+    total_bytes = sum(r.get("size") or 0 for r in chosen)
+    print(f"選抜の合計サイズ: {total_bytes / 1e6:.1f} MB")
 
     by_country: dict[str, int] = {}
     for r in chosen:
