@@ -1,28 +1,35 @@
 # Vercel へ送らないもの。
-# **音源(data/raw/audio/)は 881MB あり、これを送ると upload が中断する**
-# (実測 2026-09-08: .vercelignore 無しで `vercel deploy` が Upload aborted で落ちた)。
-# サイトが必要とするのは public/data/*.json だけで、音源は Commons の原本を指す。
+#
+# **すべて先頭 `/` で固定する。** 無印のパターンは .gitignore と同じ意味で
+# **どの階層にも当たる**ので、`data/` と書くと `public/data/` まで消える。
+# `public/data/*.json` は画面が読む本体なので、消えるとビルドが壊れる
+# (実測 2026-09-08: `Page "/song/[id]" is missing "generateStaticParams()"` で落ちた。
+#  generateStaticParams は `public/data/songs.json` を読んでいる)。
+#
+# 音源(data/raw/audio/)は 881MB あり、送ると upload が中断する。
+# サイトが必要とするのは public/ の中身だけで、音源は Commons の原本を指す。
 
-.venv/
-data/
-ml/
-logs/
-harness/
-schema/
-schemas/
-shots/
-docs/
-scripts/
-out/
-.next/
+/.venv/
+/data/
+/ml/
+/logs/
+/harness/
+/schema/
+/schemas/
+/shots/
+/docs/
+/scripts/
+/out/
+/.next/
+/pytest.ini
+/requirements.txt
+/SPEC.md
+/TEST_SPEC.md
+/HARNESS_CHANGELOG.md
+/AGENTS.md
+/README.md
+/.scaffold/
+/.wt/
 __pycache__/
 *.pyc
 .pytest_cache/
-pytest.ini
-requirements.txt
-SPEC.md
-TEST_SPEC.md
-HARNESS_CHANGELOG.md
-AGENTS.md
-.scaffold/
-.wt/
