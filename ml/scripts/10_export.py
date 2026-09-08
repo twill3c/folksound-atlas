@@ -101,8 +101,11 @@ def main() -> int:
             shutil.copyfile(src, args.outdir / name)
 
     models = json.loads((emb / "models.json").read_text(encoding="utf-8"))["models"]
+    # **生の Embedding は配らない**(N-03)。画面が使うのは射影と近傍だけで、
+    # 128 次元 × 全件を配ると数 MB 増えるのに、誰も読まない。
+    # 生の Embedding は `data/embeddings/` に残り、検査もそちらに当てる。
     for m in models:
-        for kind in ("umap", "pca", "similarity", "embedding"):
+        for kind in ("umap", "pca", "similarity"):
             p = emb / f"{kind}_{m['model_id']}.json"
             if p.exists():
                 shutil.copyfile(p, args.outdir / p.name)

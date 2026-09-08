@@ -1,0 +1,24 @@
+{
+ "dataset_version": "1.1.0",
+ "generated_at": "2026-09-08T07:53:32+0900",
+ "recording_count": 314,
+ "country_count": 37,
+ "uploader_count": 122,
+ "feature_version": "1.0",
+ "embedding_models": [
+  "feat-baseline-v1",
+  "self-ae-v1",
+  "self-clf-v1"
+ ],
+ "audio_hosting": "Wikimedia Commons(原本を直接参照。本サイトは音源を再配布しない)",
+ "projection": {
+  "generated_at": "2026-09-08T07:51:14+0900",
+  "random_state": 42,
+  "umap_params": {
+   "n_neighbors": 15,
+   "min_dist": 0.1,
+   "metric": "cosine"
+  },
+  "top_n": 20
+ }
+}

@@ -1,0 +1,41 @@
+{
+ "generated_at": "2026-09-08T07:46:38+0900",
+ "models": [
+  {
+   "model_id": "feat-baseline-v1",
+   "name": "従来型音響特徴量",
+   "type": "features",
+   "embedding_dimension": 65,
+   "training_objective": "学習しない(librosa の特徴量を標準化して並べただけ)",
+   "training_dataset": null,
+   "saw_country_labels": false,
+   "may_support_geographic_claim": true,
+   "label_note": "国名を一度も見ていない。地理の話に使える",
+   "version": "1.0"
+  },
+  {
+   "model_id": "self-ae-v1",
+   "name": "自作 CNN(自己教師あり)",
+   "type": "cnn-autoencoder",
+   "embedding_dimension": 128,
+   "training_objective": "メルスペクトログラムの再構成のみ",
+   "training_dataset": "folk-v1.1 (train split)",
+   "saw_country_labels": false,
+   "may_support_geographic_claim": true,
+   "label_note": "国名を一度も見ていない。地理の話に使える",
+   "version": "1.0"
+  },
+  {
+   "model_id": "self-clf-v1",
+   "name": "自作 CNN(国分類器)",
+   "type": "cnn-classifier",
+   "embedding_dimension": 128,
+   "training_objective": "国の分類(25 国)",
+   "training_dataset": "folk-v1.1 (train split)",
+   "saw_country_labels": true,
+   "may_support_geographic_claim": false,
+   "label_note": "国名を教わって学習した。国ごとに固まるのは仕掛けであって発見ではない",
+   "version": "1.0"
+  }
+ ]
+}

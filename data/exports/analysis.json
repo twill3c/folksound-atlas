@@ -1,0 +1,73 @@
+{
+ "generated_at": "2026-09-08T07:52:53+0900",
+ "preregistered": {
+  "H01": "地理距離と音響距離に正の相関がある(両側 p<0.05)",
+  "H02": "その相関は録音の出自(投稿者)で説明されない",
+  "decision_rule": {
+   "H01": "r > 0 かつ p < alpha",
+   "H02": "偏 Mantel で r > 0 かつ p < alpha かつ |r_partial| >= 0.5 * |r_raw|",
+   "headline": "H01 と H02 の両方"
+  },
+  "note": "この規則は測定より前に SPEC §2.3 へ書いた。結果を見てから変えない"
+ },
+ "results": [
+  {
+   "model_id": "feat-baseline-v1",
+   "model_name": "従来型音響特徴量",
+   "saw_country_labels": false,
+   "n_recordings": 314,
+   "n_countries": 37,
+   "n_uploaders": 122,
+   "permutations": 999,
+   "seed": 42,
+   "alpha": 0.05,
+   "geo_vs_acoustic": {
+    "r": 0.03908,
+    "p": 0.001
+   },
+   "geo_vs_acoustic_given_provenance": {
+    "r": -0.00375,
+    "p": 0.445
+   },
+   "provenance_vs_acoustic": {
+    "r": 0.20663,
+    "p": 0.001
+   },
+   "H01_supported": true,
+   "H02_supported": false,
+   "headline_supported": false
+  },
+  {
+   "model_id": "self-ae-v1",
+   "model_name": "自作 CNN(自己教師あり)",
+   "saw_country_labels": false,
+   "n_recordings": 314,
+   "n_countries": 37,
+   "n_uploaders": 122,
+   "permutations": 999,
+   "seed": 42,
+   "alpha": 0.05,
+   "geo_vs_acoustic": {
+    "r": 0.03456,
+    "p": 0.205
+   },
+   "geo_vs_acoustic_given_provenance": {
+    "r": 0.00888,
+    "p": 0.785
+   },
+   "provenance_vs_acoustic": {
+    "r": 0.12558,
+    "p": 0.001
+   },
+   "H01_supported": false,
+   "H02_supported": false,
+   "headline_supported": false
+  },
+  {
+   "model_id": "self-clf-v1",
+   "saw_country_labels": true,
+   "excluded_from_geographic_claim": true,
+   "reason": "国ラベルを見て学習したモデルなので、地理の主張に使うと循環する(SPEC §2.2 / G-04)"
+  }
+ ]
+}

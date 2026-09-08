@@ -31,7 +31,10 @@ export default function WorldMap({ songs, selectedId, onSelect, highlightIds }: 
 
   useEffect(() => {
     let alive = true;
-    fetch("./data/world.geojson")
+    // 絶対パスで引く。`trailingSlash: true` なのでこの頁は `/map/` にあり、
+    // 相対パス `./data/...` は `/map/data/...` になって 404 する
+    // (実測 2026-09-08: 実ブラウザ検品で陸地が出ないことから見つけた)。
+    fetch("/data/world.geojson")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (alive && d) setWorld(d.features as WorldFeature[]);

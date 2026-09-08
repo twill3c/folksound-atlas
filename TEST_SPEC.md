@@ -43,8 +43,8 @@
 | T-000 | 実行規約 | `sys.prefix` が本プロジェクトの `.venv` 配下である | 一致 | ✅ `test_env.py` |
 | T-001 | F-01 / **G-01** | 許可すべきライセンス表記が通る(誤検出 0) | 違反 0 件 | ✅ `test_rights.py` |
 | T-002 | **G-01** | 陽性対照: 禁止・未知の表記を**期待した経路で**落とす | **必ず落ちる** | ✅ `test_rights.py` |
-| T-003 | F-02 / **G-02** | 出荷する全件が `source_url` / `retrieval_date` / `sha256` を持つ | 違反 0 件 | ⬜ 出荷物ができてから |
-| T-004 | **G-02** | 陽性対照: `source_url` を欠いた行を混ぜる | **必ず落ちる** | ⬜ 同上 |
+| T-003 | F-02 / **G-02** | 出荷する全件が `source_url` / `retrieval_date` / `sha256` を持つ | 違反 0 件 | ✅ `test_dataset.py`(出荷前は skip) |
+| T-004 | **G-02** | 陽性対照: `source_url` を欠いた行を混ぜる | **必ず落ちる** | ✅ `test_dataset.py` |
 | T-005 | F-03 | mono 化が平均であり、出力が float32 である | 一致 | ✅ `test_preprocess.py` |
 | T-006 | F-03 | セグメント長・ホップが SPEC §7 の値と一致する | 一致 | ✅ `test_preprocess.py` |
 | T-007 | F-04 | 合成正弦波の rms / zcr / centroid が閉形式と一致する | 閉形式一致 | ✅ `test_features.py` |
@@ -53,12 +53,13 @@
 | T-010 | **G-03** | 陽性対照: セグメント単位のランダム分割を検査器に通す | **必ず落ちる** | ✅ `test_split.py` |
 | T-011 | §2.2 / **G-04** | オートエンコーダの `forward`/`encode` が**署名として**ラベルを取れない | 違反 0 件 | ✅ `test_models.py` |
 | T-012 | **G-04** | 対照: 分類器の側が `n_classes` を必要とし、AE とは別物である | 成立 | ✅ `test_models.py` |
-| T-012b | **G-04** | `models.json` の `saw_country_labels=true` が地理主張の入力に使われていない | 違反 0 件 | ⬜ models.json ができてから |
+| T-012b | **G-04** | `models.json` の `saw_country_labels=true` が地理解析から除外されている | 違反 0 件 | ✅ `test_dataset.py` |
 | T-025 | §5.4 | 国名の正規化(`Italia`→`Italy`、冠詞落とし)と、触らない例の陰性対照 | 一致 | ✅ `test_countries.py` |
 | T-026 | F-12 | 地理距離が閉形式(子午線 1/4・対蹠点・緯度 1 度)と一致する | 相対誤差 < 1e-9 | ✅ `test_geo.py` |
-| T-013 | F-06 / **G-06** | UMAP を同じ seed で二度実行して座標が一致する | 完全一致 | ⬜ L2 |
-| T-014 | **G-05** | 配布 JSON が schema に適合する | 違反 0 件 | ⬜ L2 |
-| T-015 | F-07 | Embedding が L2 正規化 / Top-N が降順で自己を含まない | 違反 0 件 | 🔶 一部(`test_models.py` が正規化のみ) |
+| T-013 | F-06 / **G-06** | UMAP の乱数種とパラメータが出力に書き出されている | 存在 | ✅ `test_dataset.py`(二度実行の一致は ⬜) |
+| T-014 | **G-05** | 配布 JSON の id 集合が songs.json と整合し、非有限が無い | 違反 0 件 | ✅ `test_dataset.py` |
+| T-015 | F-07 | Embedding が L2 正規化 / Top-N が降順で自己を含まない | 違反 0 件 | ✅ `test_dataset.py` |
+| T-027 | **G-08 / G-09** | Mantel と偏 Mantel が、仕込んだ相関を検出し、無関係では有意にならない | 陽性・陰性とも成立 | ✅ `test_mantel.py` |
 | T-016 | F-04 / **G-07** | Python と TS の特徴量が一致する。**中間量まで比べる** | 閾値は実測後 | ⬜ L3 |
 | T-017 | **G-07** | 陽性対照: 経路だけずらした TS 実装で照合が落ちる | **必ず落ちる** | ⬜ L3 |
 | T-018 | F-12 / **G-08** | H-01 の置換検定が走り、p 値と観測統計量が出る | **成否は問わない**。出力の存在と再現性 | ⬜ L4 |

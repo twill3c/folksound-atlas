@@ -22,32 +22,47 @@ N_MELS = 128         # SPEC §7
 EMBEDDING_DIM = 128  # SPEC §8
 
 
-def _block(cin: int, cout: int) -> nn.Sequential:
+def _block(cin: int, cout: int, stride: int = 1) -> nn.Sequential:
     return nn.Sequential(
-        nn.Conv2d(cin, cout, kernel_size=3, padding=1),
+        nn.Conv2d(cin, cout, kernel_size=3, padding=1, stride=stride),
         nn.BatchNorm2d(cout),
         nn.ReLU(inplace=True),
     )
+
+
+# 各段のチャネル数。CPU で学習しきれる大きさにしてある。
+#
+# 実測 2026-09-08(この機 / torch 2.14.0+cpu / 6 スレッド):
+#   最初は 32/64/128/128 で組んでいたが、前向きだけで 42 GFLOP/バッチ になり、
+#   バッチ 64 で 1 ステップ 36.2 秒(encode だけで 19.7 秒)、1 エポック 22 分だった。
+#   畳み込み自体は壊れていない(conv 32->64 @64x108 b16 で 0.210 秒 ≒ 11 GFLOPS)。
+#   **単に設計が重すぎた。**
+#   第 1 層に stride 2 を入れ、チャネルを半分にして約 1/16 に落とした。
+#   ここで作る Embedding は「空間どうしを見比べる」ためのもので、
+#   最高精度を狙うものではないので、この取り替えは目的を損なわない。
+CHANNELS = (16, 32, 64, 64)
 
 
 class _Encoder(nn.Module):
     """メルスペクトログラム -> 128 次元。
 
     時間長に依存しないよう、最後は**大域平均プーリング**で潰す。
+    第 1 層で stride 2 を使い、いちばん高い解像度で厚い畳み込みをしない。
     """
 
     def __init__(self, dim: int = EMBEDDING_DIM) -> None:
         super().__init__()
+        c1, c2, c3, c4 = CHANNELS
         self.net = nn.Sequential(
-            _block(1, 32),
-            nn.MaxPool2d(2),
-            _block(32, 64),
-            nn.MaxPool2d(2),
-            _block(64, 128),
-            nn.MaxPool2d(2),
-            _block(128, 128),
+            _block(1, c1, stride=2),   # 128xT -> 64x(T/2)
+            nn.MaxPool2d(2),           #       -> 32x(T/4)
+            _block(c1, c2),
+            nn.MaxPool2d(2),           #       -> 16x(T/8)
+            _block(c2, c3),
+            nn.MaxPool2d(2),           #       ->  8x(T/16)
+            _block(c3, c4),
         )
-        self.head = nn.Linear(128, dim)
+        self.head = nn.Linear(c4, dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         h = self.net(x)
@@ -61,14 +76,19 @@ class FolkCNNAutoencoder(nn.Module):
     `forward` も `encode` も、引数は入力テンソルだけである。
     """
 
+    # 復号は低い解像度で組み立ててから引き伸ばす。
+    # 高い解像度で畳み込むと、符号化側と同じ理由で CPU に載らなくなる。
+    DEC_ROWS = 16
+
     def __init__(self, dim: int = EMBEDDING_DIM) -> None:
         super().__init__()
+        c1, c2, c3, c4 = CHANNELS
         self.encoder = _Encoder(dim)
-        self.decoder_fc = nn.Linear(dim, 128 * (N_MELS // 8))
+        self.decoder_fc = nn.Linear(dim, c4 * self.DEC_ROWS)
         self.decoder = nn.Sequential(
-            _block(128, 64),
-            _block(64, 32),
-            nn.Conv2d(32, 1, kernel_size=3, padding=1),
+            _block(c4, c3),
+            _block(c3, c2),
+            nn.Conv2d(c2, 1, kernel_size=3, padding=1),
         )
 
     def encode(self, x: torch.Tensor) -> torch.Tensor:
@@ -76,9 +96,10 @@ class FolkCNNAutoencoder(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         n, _, n_mels, t = x.shape
+        c4 = CHANNELS[-1]
         z = self.encode(x)
-        h = self.decoder_fc(z).view(n, 128, n_mels // 8, 1)
-        h = h.expand(-1, -1, -1, max(t // 8, 1))
+        h = self.decoder_fc(z).view(n, c4, self.DEC_ROWS, 1)
+        h = h.expand(-1, -1, -1, max(t // 16, 1))
         h = self.decoder(h)
         return F.interpolate(h, size=(n_mels, t), mode="bilinear", align_corners=False)
 
