@@ -2,7 +2,7 @@
 
 地理帰属の出所は **カテゴリ所属のみ**(SPEC §5.1)。題名・演奏者名から推定しない。
 
-なぜ `deepcat:` を使わないか(実測 2026-09-07 / HC-204):
+なぜ `deepcat:` を使わないか(実測 2026-09-07 / HC-226):
     Commons の CirrusSearch には `deepcat:"<カテゴリ>"` という便利な演算子があり、
     カテゴリ木をサーバ側で展開してくれる。しかしこれは **誤りを黙って返す**。
     `deepcat:"Folk music of Ireland" filemime:audio` は totalhits=112 を返すが、
@@ -26,7 +26,7 @@ import urllib.request
 from pathlib import Path
 
 API = "https://commons.wikimedia.org/w/api.php"
-# Wikimedia の UA 方針(実在の連絡先を出す)。HC-204 / loop_001 の実測を参照。
+# Wikimedia の UA 方針(実在の連絡先を出す)。HC-226 / loop_001 の実測を参照。
 UA = (
     "FolkSoundAtlas/0.1 "
     "(https://github.com/twill3c/folksound-atlas; research dataset builder) "
@@ -203,7 +203,7 @@ def main() -> int:
     payload = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "source": "Wikimedia Commons",
-        "method": "list=categorymembers (deepcat is NOT used; see HC-204)",
+        "method": "list=categorymembers (deepcat is NOT used; see HC-226)",
         "max_depth": args.max_depth,
         "api_calls": api.calls,
         "counts_by_country": dict(sorted(by_country.items(), key=lambda kv: -kv[1])),

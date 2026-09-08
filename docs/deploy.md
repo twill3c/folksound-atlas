@@ -66,7 +66,7 @@ vercel build --prod --yes
 vercel deploy --prebuilt --prod --yes
 ```
 
-理由(実測 2026-09-08 / HC-207):
+理由(実測 2026-09-08 / HC-229):
 
 - `.vercelignore` 無しで `vercel deploy` すると、音源 881MB と `.venv` を
   送ろうとして `Upload aborted` になる。除外設定は最初のデプロイ前に書く

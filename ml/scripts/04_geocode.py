@@ -50,7 +50,7 @@ MANUAL_QIDS: dict[str, dict] = {
         "note": "Q148 を直接引いて確認(2026-09-07)。索引はラベル差で当たらなかった",
     },
 }
-# Wikimedia の UA 方針(実在の連絡先を出す)。HC-204 / loop_001 の実測を参照。
+# Wikimedia の UA 方針(実在の連絡先を出す)。HC-226 / loop_001 の実測を参照。
 UA = (
     "FolkSoundAtlas/0.1 "
     "(https://github.com/twill3c/folksound-atlas; research dataset builder) "

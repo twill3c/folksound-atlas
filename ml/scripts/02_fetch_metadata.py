@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from folksound.rights import classify_license  # noqa: E402
 
 API = "https://commons.wikimedia.org/w/api.php"
-# Wikimedia の UA 方針(実在の連絡先を出す)。HC-204 / loop_001 の実測を参照。
+# Wikimedia の UA 方針(実在の連絡先を出す)。HC-226 / loop_001 の実測を参照。
 UA = (
     "FolkSoundAtlas/0.1 "
     "(https://github.com/twill3c/folksound-atlas; research dataset builder) "

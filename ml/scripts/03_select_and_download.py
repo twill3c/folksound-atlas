@@ -144,7 +144,7 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--min-bytes", type=int, default=20_000)
     ap.add_argument("--max-bytes", type=int, default=40_000_000)
-    # upload.wikimedia.org は API より厳しい。既定を余裕のある間隔にする(HC-204)
+    # upload.wikimedia.org は API より厳しい。既定を余裕のある間隔にする(HC-226)
     ap.add_argument("--delay", type=float, default=2.0)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
