@@ -57,10 +57,38 @@ npm run verify:browser -- --self-test     # 実ブラウザ検品(G-12)
 
 ## Vercel
 
-- Framework Preset: **Next.js**
-- Build Command: `npm run build`
-- Output Directory: `out`
+**本番: https://folksound-atlas.vercel.app**
+
+このプロジェクトは **prebuilt デプロイ**で運用する。
+
+```bash
+vercel build --prod --yes
+vercel deploy --prebuilt --prod --yes
+```
+
+理由(実測 2026-09-08 / HC-207):
+
+- `.vercelignore` 無しで `vercel deploy` すると、音源 881MB と `.venv` を
+  送ろうとして `Upload aborted` になる。除外設定は最初のデプロイ前に書く
+- 除外設定を置いても、**リモートのビルドだけ**が
+  `Page "/song/[id]" is missing "generateStaticParams()"` で失敗する。
+  手元の `npm run build` は 314 頁を生成でき、当該ファイルは `git ls-files` にも出る。
+  **角括弧を含むディレクトリが転送側で落ちている**と判断した。
+  Next は「ファイルが無い」ではなく「関数が無い」と言うので、コードの誤りに見える点に注意
+- prebuilt なら**手元で検品した木をそのまま配る**ことになり、二重に都合がよい
+
+設定(prebuilt では Vercel 側のビルド設定は使われない):
+
+- Framework Preset: Next.js / Output Directory: `out`
 - 環境変数: 不要
+
+## 本番に対する検品
+
+`out/` を見て緑でも、本番で同じとは限らない。**本番の URL に対しても検品を回す。**
+
+```bash
+node scripts/verify-browser.mjs --base https://folksound-atlas.vercel.app --self-test
+```
 
 `public/data/` は Git に入っているので、Vercel 側で ETL は走らない。
 **データを更新したいときは、手元で ETL を回して `public/data/` を commit する。**

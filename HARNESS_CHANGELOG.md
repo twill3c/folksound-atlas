@@ -53,3 +53,18 @@
 | propagation | 未実施(folksound-atlas `scripts/verify-browser.mjs` の `checkSvgGeometry` / 層ごとの計数が先行事例) |
 | 状態 | Proposed |
 | 備考 | 失敗レコードは `logs/loops/loop_001.jsonl` と `loop_002.jsonl` |
+
+## HC-207
+
+| 項目 | 内容 |
+|---|---|
+| 起票日 | 2026-09-08 |
+| トリガー | `TOOL-ENV` 累計 2 回目(LL-10、folksound-atlas loop_003)。(a) `vercel deploy` が `Upload aborted` で落ちた —— `.vercelignore` を置いておらず、音源 881MB と `.venv` を丸ごと送ろうとしていた。(b) `.vercelignore` を置いたら今度は**リモートのビルドだけ**が `Page "/song/[id]" is missing "generateStaticParams()"` で失敗した。**手元の `npm run build` は 314 頁を生成でき、当該ファイルは `git ls-files` にも出る。**角括弧を含むディレクトリ(`src/app/song/[id]/`)が CLI の転送側で取りこぼされたと判断し、prebuilt デプロイ(`vercel build --prod --yes` → `vercel deploy --prebuilt --prod`)へ切り替えて成功した |
+| 診断 | (b) が本題である。**「手元でビルドが通る」と「配られる木でビルドが通る」は別**(HC-062)だが、この件はさらに一段深く、**「配られる木」そのものが手元と違っていた**。転送の除外規則はグロブで書かれるため、`[id]` のような**動的ルートの角括弧が文字クラスとして解釈されうる**。しかも失敗の出方が紛らわしい —— Next は「ファイルが無い」ではなく「`generateStaticParams()` が無い」と言うので、**コードの誤りに見える。**実際こちらは一瞬、関数の書き方を疑った。`git ls-files` と手元ビルドの二つを突き合わせて初めて「送られていない」に行き着いた。動的ルートは現代のフレームワークではありふれているので、この罠は誰でも踏む |
+| 改訂 | agents_core の「この環境で書くとき」へ次を追加することを提案する: **「デプロイ先のビルドだけが失敗し、手元のビルドが通るときは、コードを疑う前に *その木に何が届いたか* を疑う。とくに角括弧・空白・非 ASCII を含むパス(動的ルート `[id]`、`[...slug]` など)は、転送の除外規則がグロブとして解釈して落とすことがある。確かめ方は (1) `git ls-files` に在るか (2) 手元の同じコマンドで通るか の二点を突き合わせること。届いていないと分かったら、**手元で作った成果物をそのまま配る**(Vercel なら `vercel build` → `vercel deploy --prebuilt`)に切り替えるのが速い —— これは検品した木をそのまま配ることにもなり、二重に得である」**。あわせて: **「大きな中間生成物(音源・データセット・仮想環境)を持つプロジェクトでは、最初のデプロイの前に除外設定を書く。書かないと転送が中断し、原因が容量だと分かるまで時間を取られる」** |
+| 種別 | agents_md |
+| SCAFFOLD_VERSION | (承認後に採番) |
+| 効果検証 | 以後 10 ループで「手元は通るがデプロイ先だけ失敗する」型の失敗 0 件なら Closed |
+| propagation | 未実施(folksound-atlas `.vercelignore` と prebuilt 運用が先行事例) |
+| 状態 | Proposed |
+| 備考 | 失敗レコードは `logs/loops/loop_003.jsonl` |
