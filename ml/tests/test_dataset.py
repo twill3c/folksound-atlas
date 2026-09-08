@@ -197,6 +197,38 @@ def test_features_cover_every_song():
     )
 
 
+def test_every_song_has_a_spectrogram_image():
+    """仕様書 §126 が MVP 必須に挙げる Spectrogram。
+
+    台帳に載っているだけでなく、**画像が実在すること**まで見る。
+    台帳だけを見る検査は、画像を配り忘れても緑になる。
+    """
+    songs = {s["id"] for s in load("songs.json")["songs"]}
+    spec = load("spectrograms.json")
+    listed = {s["id"] for s in spec["items"]}
+    assert songs == listed, (
+        f"songs と spectrograms が食い違う: 欠 {sorted(songs - listed)[:5]} / "
+        f"余 {sorted(listed - songs)[:5]}"
+    )
+    imgdir = ROOT / "public" / "spectrogram"
+    missing = [i for i in sorted(listed) if not (imgdir / f"{i}.webp").exists()]
+    assert not missing, f"画像が無い: {missing[:5]}"
+
+
+def test_spectrogram_window_is_recorded():
+    """どの区間を描いた絵かが台帳に残っていること。
+
+    区間を書かずに絵だけ配ると、読み手は「録音全体」と受け取る。
+    """
+    spec = load("spectrograms.json")
+    for key in ("window_seconds", "start_fraction", "fmin", "fmax", "n_mels"):
+        assert key in spec, f"{key} が spectrograms.json に無い"
+    for row in spec["items"][:50]:
+        assert row["duration_s"] > 0
+        assert row["start_s"] >= 0
+        assert row["width"] > 0 and row["height"] > 0
+
+
 def test_no_non_finite_numbers_in_features():
     for f in load("features.json")["items"]:
         for k, v in f.items():

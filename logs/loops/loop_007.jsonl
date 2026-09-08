@@ -1,0 +1,1 @@
+{"v": "1.2", "ts": "2026-09-08T16:26:48+09:00", "project": "folksound-atlas", "loop_id": "loop_007", "event": "loop_start", "data": {"goal": "スペクトログラム表示(仕様書 §64/§107/§114、MVP 必須の積み残し)", "spec_refs": ["F-10", "P3"], "scaffold_version": "1.30.0", "agent": "claude-code", "model": "claude-opus-5"}}

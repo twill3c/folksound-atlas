@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import FeatureTable from "@/components/FeatureTable";
 import Nav from "@/components/Nav";
+import Spectrogram from "@/components/Spectrogram";
 import Waveform from "@/components/Waveform";
 import {
   getFeatures,
@@ -10,6 +11,7 @@ import {
   getModels,
   getSimilarity,
   getSongs,
+  getSpectrograms,
   getWaveforms,
 } from "@/lib/server-data";
 
@@ -30,6 +32,8 @@ export default async function SongPage({
   const byId = new Map(songs.map((s) => [s.id, s]));
   const feature = getFeatures().get(id) ?? null;
   const wave = getWaveforms().get(id) ?? null;
+  const specFile = getSpectrograms();
+  const spec = specFile?.items.find((s) => s.id === id) ?? null;
   const models = getModels();
   const blind = getLabelBlindModels();
 
@@ -88,6 +92,18 @@ export default async function SongPage({
                 縦は最大値で正規化した包絡線です。<strong>高さの絶対値に意味はありません</strong>
                 (録音どうしの音量比較には使えません)。
               </p>
+            </section>
+          )}
+
+          {specFile && (
+            <section className="panel">
+              <h2>スペクトログラム</h2>
+              <Spectrogram
+                id={id}
+                meta={spec}
+                fmin={specFile.fmin}
+                fmax={specFile.fmax}
+              />
             </section>
           )}
 

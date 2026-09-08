@@ -10,6 +10,7 @@ import type {
   SimilarityRow,
   Song,
   SongsFile,
+  SpectrogramFile,
   WaveformRow,
 } from "./types";
 
@@ -47,6 +48,10 @@ export function getFeatures(): Map<string, FeatureRow> {
 export function getWaveforms(): Map<string, WaveformRow> {
   const f = readJson<{ items: WaveformRow[] }>("waveforms.json");
   return new Map((f?.items ?? []).map((r) => [r.id, r]));
+}
+
+export function getSpectrograms(): SpectrogramFile | null {
+  return readJson<SpectrogramFile>("spectrograms.json");
 }
 
 export function getSimilarity(modelId: string): Map<string, SimilarityRow> {

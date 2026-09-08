@@ -50,6 +50,27 @@ export interface WaveformRow {
   duration_s: number;
 }
 
+export interface SpectrogramRow {
+  id: string;
+  /** 録音のどこから切り出した絵か(秒) */
+  start_s: number;
+  duration_s: number;
+  width: number;
+  height: number;
+}
+
+export interface SpectrogramFile {
+  generated_at: string;
+  window_seconds: number;
+  start_fraction: number;
+  n_mels: number;
+  fmin: number;
+  fmax: number;
+  note: string;
+  failed: { id: string; error: string }[];
+  items: SpectrogramRow[];
+}
+
 export interface ModelInfo {
   model_id: string;
   name: string;

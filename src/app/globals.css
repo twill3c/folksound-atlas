@@ -292,6 +292,38 @@ th { color: var(--ink-2); font-weight: 600; }
 .wave__axis { stroke: var(--rule-2); stroke-width: 0.6; }
 .wave__tick { font-size: 10px; fill: var(--ink-3); }
 
+/* ---- スペクトログラム ---- */
+.spec { margin: 0; }
+.spec__frame { display: flex; gap: 6px; align-items: stretch; }
+.spec__yaxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  text-align: right;
+  min-width: 30px;
+  padding: 1px 0;
+}
+.spec__img {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  max-height: 260px;
+  border: 1px solid var(--rule);
+  image-rendering: auto;
+  display: block;
+}
+.spec__xaxis {
+  display: flex;
+  justify-content: space-between;
+  margin: 3px 0 8px 36px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-3);
+}
+
 .ftable { font-size: 13.5px; }
 .ftable th { white-space: nowrap; }
 
