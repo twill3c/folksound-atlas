@@ -77,6 +77,9 @@ def test_spec_correlation_table_matches_analysis():
         ("self-ae-v1", "geo_vs_acoustic", "H-01"),
         ("self-ae-v1", "geo_vs_acoustic_given_provenance", "H-02"),
         ("self-ae-v1", "provenance_vs_acoustic", "対抗"),
+        ("pretrained-w2v2-v1", "geo_vs_acoustic", "H-01"),
+        ("pretrained-w2v2-v1", "geo_vs_acoustic_given_provenance", "H-02"),
+        ("pretrained-w2v2-v1", "provenance_vs_acoustic", "対抗"),
     ]:
         if mid not in by_id:
             continue

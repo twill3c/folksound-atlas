@@ -45,6 +45,10 @@
         },
         "source": { "type": "string", "minLength": 1 },
         "source_url": { "type": "string", "pattern": "^https://" },
+        "audio_url": {
+          "type": ["string", "null"],
+          "description": "Commons の原本の直リンク。本サイトは音源を再配布せず、ここを指すだけ"
+        },
         "license": { "type": "string", "minLength": 1 },
         "license_url": { "type": ["string", "null"] },
         "attribution": { "type": ["string", "null"] },

@@ -9,6 +9,10 @@
       "additionalProperties": false,
       "properties": {
         "feature_version": { "type": "string" },
+        "excerpt_policy": {
+          "type": "string",
+          "description": "特徴量をどの材料から算出したか(録音全体ではなく抜き出した断片の連結)"
+        },
         "items": { "type": "array", "items": { "$ref": "#/$defs/feature_row" } }
       }
     },

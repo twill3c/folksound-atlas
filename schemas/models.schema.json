@@ -6,6 +6,7 @@
   "required": ["models"],
   "additionalProperties": false,
   "properties": {
+    "generated_at": { "type": "string" },
     "models": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/model" } }
   },
   "$defs": {

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-08T09:52:49+0900",
+ "generated_at": "2026-09-08T14:56:21+0900",
  "models": [
   {
    "model_id": "feat-baseline-v1",
@@ -35,6 +35,20 @@
    "saw_country_labels": true,
    "may_support_geographic_claim": false,
    "label_note": "国名を教わって学習した。国ごとに固まるのは仕掛けであって発見ではない",
+   "version": "1.0"
+  },
+  {
+   "model_id": "pretrained-w2v2-v1",
+   "name": "wav2vec 2.0(外部・事前学習)",
+   "type": "pretrained",
+   "embedding_dimension": 768,
+   "training_objective": "音声 960 時間の自己教師あり学習(LibriSpeech)。本コーパスは一度も見ていない",
+   "training_dataset": "LibriSpeech 960h(外部)",
+   "saw_country_labels": false,
+   "may_support_geographic_claim": true,
+   "label_note": "国名どころか本コーパスの音源自体を見ていない。ただし**話し声のモデル**であって音楽のモデルではない",
+   "inference_time_ms": null,
+   "model_size_bytes": null,
    "version": "1.0"
   }
  ]

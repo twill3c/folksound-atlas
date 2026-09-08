@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-08T09:54:24+0900",
+ "generated_at": "2026-09-08T14:59:55+0900",
  "preregistered": {
   "H01": "地理距離と音響距離に正の相関がある(両側 p<0.05)",
   "H02": "その相関は録音の出自(投稿者)で説明されない",
@@ -68,6 +68,32 @@
    "saw_country_labels": true,
    "excluded_from_geographic_claim": true,
    "reason": "国ラベルを見て学習したモデルなので、地理の主張に使うと循環する(SPEC §2.2 / G-04)"
+  },
+  {
+   "model_id": "pretrained-w2v2-v1",
+   "model_name": "wav2vec 2.0(外部・事前学習)",
+   "saw_country_labels": false,
+   "n_recordings": 314,
+   "n_countries": 37,
+   "n_uploaders": 122,
+   "permutations": 999,
+   "seed": 42,
+   "alpha": 0.05,
+   "geo_vs_acoustic": {
+    "r": -0.03741,
+    "p": 0.285
+   },
+   "geo_vs_acoustic_given_provenance": {
+    "r": -0.06862,
+    "p": 0.051
+   },
+   "provenance_vs_acoustic": {
+    "r": 0.14074,
+    "p": 0.001
+   },
+   "H01_supported": false,
+   "H02_supported": false,
+   "headline_supported": false
   }
  ]
 }
