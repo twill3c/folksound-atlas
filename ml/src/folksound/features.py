@@ -66,6 +66,42 @@ def _safe(v: float) -> float:
     return float(v) if np.isfinite(v) else 0.0
 
 
+def _tempo_fn():
+    """librosa のテンポ推定関数を**明示的に**取りに行く。
+
+    librosa は版によって置き場所が変わる:
+        1.0 系   `librosa.feature.tempo`
+        0.10 系  `librosa.feature.rhythm.tempo`
+
+    ここを `try/except` で握りつぶすと、**関数が見つからないという実装の誤りが、
+    「テンポ 0.0」という もっともらしいデータに化ける。**
+    実際にこのプロジェクトで、0.10 系のパスを書いたまま librosa 1.0 で走らせ、
+    314 件すべてが tempo=0.0 のまま出荷されかけた(2026-09-08)。
+    どちらのパスも無いのは**版の問題(コードの誤り)**なので、その場で落とす。
+
+    さらに `lazy_loader` のせいで、先に別の属性へ触れたあとだと
+    `librosa.feature.rhythm` が解決できてしまうことがある。
+    切り分けを誤らせるので、**触る順に依存しない形で**両方を試す。
+    """
+    import librosa
+
+    for getter in (
+        lambda: librosa.feature.tempo,          # librosa 1.0 系
+        lambda: librosa.feature.rhythm.tempo,   # librosa 0.10 系
+    ):
+        try:
+            fn = getter()
+        except AttributeError:
+            continue
+        if callable(fn):
+            return fn
+    raise AttributeError(
+        "librosa にテンポ推定関数が見つからない"
+        "(librosa.feature.tempo / librosa.feature.rhythm.tempo のどちらも無い)。"
+        "librosa の版を確かめること"
+    )
+
+
 def extract_features(x: np.ndarray, sr: int) -> dict:
     """SPEC §7 / schemas に対応する特徴量の辞書を返す。
 
@@ -126,10 +162,14 @@ def extract_features(x: np.ndarray, sr: int) -> dict:
         chroma = (chroma + [0.0] * 12)[:12]
 
     if silent:
+        # 無音にテンポは無い。これは異常ではなく正常系なので 0.0 でよい。
         tempo = 0.0
     else:
+        # **関数が無い場合は落とす**(_tempo_fn が送出する)。
+        # 音そのものが理由で推定できない場合だけ 0.0 に落とす。
+        fn = _tempo_fn()
         try:
-            t = librosa.feature.rhythm.tempo(y=x, sr=sr)
+            t = fn(y=x, sr=sr)
             tempo = _safe(np.atleast_1d(t)[0])
         except Exception:
             tempo = 0.0

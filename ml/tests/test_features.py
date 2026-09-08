@@ -87,6 +87,50 @@ def test_spectral_centroid_of_silence_is_finite():
     assert math.isfinite(c)
 
 
+def click_track(bpm: float, seconds: float, sr: int = SR) -> np.ndarray:
+    """既知のテンポを持つクリック列。
+
+    period = 60/bpm 秒ごとに短いパルスを置く。**テンポは構成で分かっている**ので、
+    外部実装にも自分の実装にも依存しないオラクルになる。
+    """
+    n = int(seconds * sr)
+    x = np.zeros(n, dtype=np.float32)
+    period = int(round(60.0 / bpm * sr))
+    for start in range(0, n - 400, period):
+        x[start : start + 400] = 1.0
+    return x
+
+
+@pytest.mark.unit
+def test_tempo_of_a_click_track_is_close_to_the_planted_bpm():
+    """テンポが**値として**正しいこと。
+
+    これが無いと、テンポ推定が例外で潰れて 0.0 を返していても、
+    「有限である」という検査は通ってしまう。
+    実際にこのプロジェクトで、librosa 1.0 で API パスが変わったことに気づかず
+    **314 件すべてが tempo=0.0** のまま出荷されかけた(2026-09-08)。
+    """
+    x = click_track(120.0, 20.0)
+    f = extract_features(x, SR)
+    got = f["tempo"]
+    assert got > 0, f"テンポが 0(推定が働いていない): {got}"
+    # 倍・半分に取り違えるのはテンポ推定では普通なので、そこは許す
+    assert (
+        abs(got - 120.0) < 12.0 or abs(got - 60.0) < 6.0 or abs(got - 240.0) < 24.0
+    ), f"120 BPM のクリック列で {got} BPM になった"
+
+
+@pytest.mark.unit
+def test_tempo_is_not_a_constant_across_different_tracks():
+    """陽性対照: 別のテンポを与えたら別の値が出ること。
+
+    定数を返す実装(例外を握りつぶした結果など)をここで落とす。
+    """
+    slow = extract_features(click_track(80.0, 20.0), SR)["tempo"]
+    fast = extract_features(click_track(160.0, 20.0), SR)["tempo"]
+    assert slow != fast, f"どちらも {slow} BPM になった(定数を返している)"
+
+
 @pytest.mark.unit
 def test_extract_features_shape_and_finiteness():
     """出荷する特徴量の形(SPEC §7 / schemas/derived.schema.json)を固定する。"""

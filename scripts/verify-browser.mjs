@@ -155,10 +155,24 @@ async function run() {
       const ctx = await browser.newContext({ viewport: { width, height: 900 } });
       const page = await ctx.newPage();
 
+      // 自分の落ち度と、外部サービスの機嫌を分ける。
+      // 本文の書体は fonts.googleapis.com から来るので、そこが遅いと
+      // ERR_TIMED_OUT が出るが、**それは本アプリの欠陥ではない**
+      // (書体が来なくても代替書体で読める)。いっぽう同一オリジンの取得失敗は
+      // こちらの欠陥なので、必ず落とす。
+      const THIRD_PARTY = ["fonts.googleapis.com", "fonts.gstatic.com"];
       const errors = [];
-      page.on("pageerror", (e) => errors.push(String(e)));
+      const thirdParty = [];
+      const bucket = (text) =>
+        THIRD_PARTY.some((h) => text.includes(h)) ? thirdParty : errors;
+
+      page.on("pageerror", (e) => bucket(String(e)).push(String(e)));
       page.on("console", (m) => {
-        if (m.type() === "error") errors.push(m.text());
+        if (m.type() === "error") bucket(m.text()).push(m.text());
+      });
+      page.on("requestfailed", (r) => {
+        const text = `${r.url()} ${r.failure()?.errorText ?? ""}`;
+        bucket(text).push(text);
       });
 
       for (const [path, label] of [
@@ -196,7 +210,14 @@ async function run() {
       if (errors.length) {
         for (const e of errors.slice(0, 5)) fail(`JS エラー@${width}: ${e.slice(0, 160)}`);
       } else {
-        ok(`幅 ${width}: JS エラーなし`);
+        ok(`幅 ${width}: 自分側の JS / 取得エラーなし`);
+      }
+      if (thirdParty.length) {
+        // 落とさないが、黙らせもしない。外部が落ちていたことは記録に残す
+        notes.push(
+          `  ! 幅 ${width}: 外部資源の失敗 ${thirdParty.length} 件` +
+            `(書体など。本アプリの欠陥ではないが、参考に残す)`,
+        );
       }
 
       await ctx.close();
