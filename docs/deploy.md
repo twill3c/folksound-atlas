@@ -59,28 +59,43 @@ npm run verify:browser -- --self-test     # 実ブラウザ検品(G-12)
 
 **本番: https://folksound-atlas.vercel.app**
 
-このプロジェクトは **prebuilt デプロイ**で運用する。
+```bash
+vercel deploy --prod --yes          # 通常はこれでよい(リモートでビルドされる)
+```
+
+- Framework Preset: Next.js / Output Directory: `out` / 環境変数: 不要
+- GitHub 連携済み。`main` への push でも本番が更新される
+
+### 除外設定は **先頭 `/` で固定して書く**(実測 2026-09-08〜09)
+
+`.vercelignore` の無印パターンは `.gitignore` と同じ意味で**どの階層にも当たる**。
+`data/` と書くと `public/data/` まで消える。`public/data/*.json` は画面が読む本体で、
+`generateStaticParams()` も `songs.json` を読むので、消えると
+
+```
+Page "/song/[id]" is missing "generateStaticParams()"
+```
+
+で落ちる。**Next は「ファイルが無い」ではなく「関数が無い」と言う**ので、
+コードの誤りに見える点に注意。真因はデータが届いていないことだった。
+
+音源(`data/raw/audio/` 881MB)と `.venv` を送ると `Upload aborted` になるので、
+除外設定そのものは最初のデプロイ前に必要である。**消しすぎず、消し漏らさず。**
+
+### prebuilt デプロイ(必要なときだけ)
 
 ```bash
 vercel build --prod --yes
 vercel deploy --prebuilt --prod --yes
 ```
 
-理由(実測 2026-09-08 / HC-229):
+手元で検品した木をそのまま配れる利点はあるが、`.vercel/output` が 35MB / 1000 ファイルを
+超えたあたりから `Upload aborted` が出やすい(実測 2026-09-09)。
+**常用しない。** リモートビルドが通らないときの逃げ道として置いておく。
 
-- `.vercelignore` 無しで `vercel deploy` すると、音源 881MB と `.venv` を
-  送ろうとして `Upload aborted` になる。除外設定は最初のデプロイ前に書く
-- 除外設定を置いても、**リモートのビルドだけ**が
-  `Page "/song/[id]" is missing "generateStaticParams()"` で失敗する。
-  手元の `npm run build` は 314 頁を生成でき、当該ファイルは `git ls-files` にも出る。
-  **角括弧を含むディレクトリが転送側で落ちている**と判断した。
-  Next は「ファイルが無い」ではなく「関数が無い」と言うので、コードの誤りに見える点に注意
-- prebuilt なら**手元で検品した木をそのまま配る**ことになり、二重に都合がよい
-
-設定(prebuilt では Vercel 側のビルド設定は使われない):
-
-- Framework Preset: Next.js / Output Directory: `out`
-- 環境変数: 不要
+> **注意:** 2026-09-08 の時点では「角括弧を含む動的ルートが転送側で落ちる」と診断して
+> prebuilt を常用にしていたが、**これは誤診だった**(HC-229 の訂正を参照)。
+> 回避策が効いたことを診断の裏づけにしてはならない。
 
 ## 本番に対する検品
 
