@@ -88,6 +88,14 @@ export default function ModelsPage() {
                   <p className="note" style={{ fontSize: 13 }}>
                     {analysis.preregistered.note}
                   </p>
+                  <p className="note" style={{ fontSize: 13, marginTop: 8 }}>
+                    <strong>物差しは二つ出します。</strong>
+                    距離の相関(Mantel)と、群れの切り方の一致(ARI)です。
+                    この二つは同じことを言っていません —— 距離で見ると国との関係はほぼ 0 ですが、
+                    群れで見ると 0 ではありません。Mantel は全部の組を平等に見るので
+                    数の多い「別の国どうし」に薄められ、ARI は大きな塊の構造に効くからです。
+                    <strong>結果を見てから都合のよい物差しを選ばないために、両方を置いています。</strong>
+                  </p>
                 </div>
 
                 {analysis.results.map((r) => {
@@ -153,6 +161,58 @@ export default function ModelsPage() {
                           {r.headline_supported ? "立った" : "立たなかった"}
                         </strong>
                       </p>
+                      {r.clustering && (
+                        <div style={{ marginTop: 14 }}>
+                          <h4 style={{ fontSize: 13.5, margin: "0 0 6px" }}>
+                            別の物差し —— 群れの切り方で見る(k={r.clustering.k})
+                          </h4>
+                          <div className="scrollx">
+                            <table className="ftable">
+                              <thead>
+                                <tr>
+                                  <th>音響クラスタと一致するか</th>
+                                  <th className="num">ARI</th>
+                                  <th className="num">まとまり</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr>
+                                  <td>国</td>
+                                  <td className="num">
+                                    {r.clustering.vs_country.ari.toFixed(4)}
+                                  </td>
+                                  <td className="num">
+                                    {r.clustering.silhouette_country?.toFixed(3) ?? "—"}
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td>投稿者(どのアーカイブか)</td>
+                                  <td className="num">
+                                    {r.clustering.vs_uploader.ari.toFixed(4)}
+                                  </td>
+                                  <td className="num">
+                                    {r.clustering.silhouette_uploader?.toFixed(3) ?? "—"}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                          <p className="note" style={{ fontSize: 13 }}>
+                            ARI は偶然の一致を差し引いた指標で、0 なら「偶然と変わらない」です。
+                            ここでも{" "}
+                            <strong>
+                              {r.clustering.uploader_beats_country
+                                ? "投稿者のほうが国よりよく一致しました"
+                                : "国のほうが投稿者よりよく一致しました"}
+                            </strong>
+                            。ただし「まとまり」(シルエット係数)は
+                            <strong>どちらも負</strong>で、
+                            録音は平均して自分の群れの仲間より他の群れに近い状態です。
+                            つまり<strong>どちらの札も音響空間の良い説明ではありません。</strong>
+                          </p>
+                        </div>
+                      )}
+
                       <p className="note" style={{ fontSize: 13 }}>
                         録音 {r.n_recordings} 本 / {r.n_countries} 国 /{" "}
                         投稿者 {r.n_uploaders} 人・置換 {r.permutations} 回(乱数種{" "}

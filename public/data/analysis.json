@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-08T14:59:55+0900",
+ "generated_at": "2026-09-09T05:56:09+0900",
  "preregistered": {
   "H01": "地理距離と音響距離に正の相関がある(両側 p<0.05)",
   "H02": "その相関は録音の出自(投稿者)で説明されない",
@@ -10,6 +10,7 @@
   },
   "note": "この規則は測定より前に SPEC §2.3 へ書いた。結果を見てから変えない"
  },
+ "clustering_note": "仕様書 §91 / Q5。距離の相関(H-01)とは別の統計量で同じことを見る。ARI は偶然一致を補正済みなので 0 付近は「偶然と変わらない」を意味する。NMI は偶然補正されておらず群れの数で上がるので、判断は ARI で行う",
  "results": [
   {
    "model_id": "feat-baseline-v1",
@@ -35,7 +36,27 @@
    },
    "H01_supported": true,
    "H02_supported": false,
-   "headline_supported": false
+   "headline_supported": false,
+   "clustering": {
+    "k": 37,
+    "vs_country": {
+     "ari": 0.20784076029552215,
+     "nmi": 0.5430034342891948,
+     "n_clusters": 37,
+     "n_label_groups": 37,
+     "n": 314
+    },
+    "vs_uploader": {
+     "ari": 0.26249700781451707,
+     "nmi": 0.6996050105029701,
+     "n_clusters": 37,
+     "n_label_groups": 122,
+     "n": 314
+    },
+    "silhouette_country": -0.215806355870445,
+    "silhouette_uploader": -0.1446788010450898,
+    "uploader_beats_country": true
+   }
   },
   {
    "model_id": "self-ae-v1",
@@ -61,7 +82,27 @@
    },
    "H01_supported": false,
    "H02_supported": false,
-   "headline_supported": false
+   "headline_supported": false,
+   "clustering": {
+    "k": 37,
+    "vs_country": {
+     "ari": 0.1687265863044087,
+     "nmi": 0.5140845573174648,
+     "n_clusters": 37,
+     "n_label_groups": 37,
+     "n": 314
+    },
+    "vs_uploader": {
+     "ari": 0.19992231510296737,
+     "nmi": 0.6701562095869417,
+     "n_clusters": 37,
+     "n_label_groups": 122,
+     "n": 314
+    },
+    "silhouette_country": -0.5203679989225959,
+    "silhouette_uploader": -0.4271161799290911,
+    "uploader_beats_country": true
+   }
   },
   {
    "model_id": "self-clf-v1",
@@ -93,7 +134,27 @@
    },
    "H01_supported": false,
    "H02_supported": false,
-   "headline_supported": false
+   "headline_supported": false,
+   "clustering": {
+    "k": 37,
+    "vs_country": {
+     "ari": 0.15155258171228397,
+     "nmi": 0.5257455818724316,
+     "n_clusters": 37,
+     "n_label_groups": 37,
+     "n": 314
+    },
+    "vs_uploader": {
+     "ari": 0.2023102470568341,
+     "nmi": 0.6729750921467299,
+     "n_clusters": 37,
+     "n_label_groups": 122,
+     "n": 314
+    },
+    "silhouette_country": -0.3266248974752247,
+    "silhouette_uploader": -0.29073772058087,
+    "uploader_beats_country": true
+   }
   }
  ]
 }

@@ -27,6 +27,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from folksound.cluster import cluster_agreement, kmeans_labels, silhouette  # noqa: E402
 from folksound.countries import canonical_country  # noqa: E402
 from folksound.geo import haversine_km  # noqa: E402
 from folksound.mantel import mantel_test, partial_mantel_test  # noqa: E402
@@ -117,6 +118,28 @@ def main() -> int:
         h01 = bool(r1 > 0 and p1 < ALPHA)
         h02 = bool(r2 > 0 and p2 < ALPHA and abs(r2) >= abs(r1) * PARTIAL_RETENTION)
 
+        # --- Q5: 音響クラスタは国の境界と一致するか(仕様書 §90–§91)-------
+        # 距離の相関(H-01)とは**別の統計量**で同じことを見る。
+        # ARI は偶然一致を補正済みなので、0 付近なら「偶然と変わらない」と読める。
+        countries = np.array([meta[i]["country"] for i in ids])
+        uploaders = np.array([meta[i]["uploader"] or "(不明)" for i in ids])
+        k = len(set(countries))
+        pred = kmeans_labels(X, k=k, seed=SEED)
+        agree_country = cluster_agreement(pred, countries)
+        agree_uploader = cluster_agreement(pred, uploaders)
+        clustering = {
+            "k": int(k),
+            "vs_country": agree_country,
+            "vs_uploader": agree_uploader,
+            # 区分そのものが音響空間でまとまっているか(仕様書 §86)
+            "silhouette_country": silhouette(X, countries),
+            "silhouette_uploader": silhouette(X, uploaders),
+            # **同じ向きか**を一目で読めるようにしておく
+            "uploader_beats_country": bool(
+                agree_uploader["ari"] > agree_country["ari"]
+            ),
+        }
+
         results.append({
             "model_id": mid,
             "model_name": m["name"],
@@ -133,12 +156,17 @@ def main() -> int:
             "H01_supported": h01,
             "H02_supported": h02,
             "headline_supported": bool(h01 and h02),
+            "clustering": clustering,
         })
         print(f"{mid}: n={len(ids)}  "
               f"geo~aco r={r1:+.3f} p={p1:.4f} | "
               f"partial r={r2:+.3f} p={p2:.4f} | "
               f"prov~aco r={r3:+.3f} p={p3:.4f} | "
               f"H01={h01} H02={h02}", flush=True)
+        print(f"    クラスタ(k={k}): ARI 国={agree_country['ari']:+.4f} "
+              f"投稿者={agree_uploader['ari']:+.4f} "
+              f"-> {'投稿者のほうが一致' if clustering['uploader_beats_country'] else '国のほうが一致'}",
+              flush=True)
 
     payload = {
         "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -152,6 +180,11 @@ def main() -> int:
             },
             "note": "この規則は測定より前に SPEC §2.3 へ書いた。結果を見てから変えない",
         },
+        "clustering_note": (
+            "仕様書 §91 / Q5。距離の相関(H-01)とは別の統計量で同じことを見る。"
+            "ARI は偶然一致を補正済みなので 0 付近は「偶然と変わらない」を意味する。"
+            "NMI は偶然補正されておらず群れの数で上がるので、判断は ARI で行う"
+        ),
         "results": results,
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)

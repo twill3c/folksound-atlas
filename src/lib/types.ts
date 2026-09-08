@@ -104,6 +104,24 @@ export interface SimilarityRow {
   similar: { id: string; score: number }[];
 }
 
+export interface ClusterAgreement {
+  ari: number;
+  nmi: number;
+  n_clusters: number;
+  n_label_groups: number;
+  n: number;
+}
+
+/** 仕様書 §91 / Q5。距離とは別の物差しで同じ問いを見る。 */
+export interface Clustering {
+  k: number;
+  vs_country: ClusterAgreement;
+  vs_uploader: ClusterAgreement;
+  silhouette_country: number | null;
+  silhouette_uploader: number | null;
+  uploader_beats_country: boolean;
+}
+
 /** 事前登録した目玉(H-01)と対照(H-02)の測定結果。 */
 export interface AnalysisResult {
   model_id: string;
@@ -123,6 +141,7 @@ export interface AnalysisResult {
   H01_supported?: boolean;
   H02_supported?: boolean;
   headline_supported?: boolean;
+  clustering?: Clustering;
 }
 
 export interface AnalysisFile {

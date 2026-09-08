@@ -1,0 +1,1 @@
+{"v": "1.2", "ts": "2026-09-09T05:49:33+09:00", "project": "folksound-atlas", "loop_id": "loop_008", "event": "loop_start", "data": {"goal": "クラスタリングで Q5(音響クラスタは地理的境界と一致するか)を別の統計量で測る", "spec_refs": ["Q5", "G-08", "G-09"], "scaffold_version": "1.30.0", "agent": "claude-code", "model": "claude-opus-5"}}
