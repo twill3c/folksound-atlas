@@ -39,3 +39,6 @@ ml/models/**
 Thumbs.db
 .DS_Store
 shots/
+
+.vercel
+.vercel/

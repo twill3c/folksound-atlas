@@ -1,0 +1,28 @@
+# Vercel へ送らないもの。
+# **音源(data/raw/audio/)は 881MB あり、これを送ると upload が中断する**
+# (実測 2026-09-08: .vercelignore 無しで `vercel deploy` が Upload aborted で落ちた)。
+# サイトが必要とするのは public/data/*.json だけで、音源は Commons の原本を指す。
+
+.venv/
+data/
+ml/
+logs/
+harness/
+schema/
+schemas/
+shots/
+docs/
+scripts/
+out/
+.next/
+__pycache__/
+*.pyc
+.pytest_cache/
+pytest.ini
+requirements.txt
+SPEC.md
+TEST_SPEC.md
+HARNESS_CHANGELOG.md
+AGENTS.md
+.scaffold/
+.wt/
