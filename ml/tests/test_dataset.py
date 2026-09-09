@@ -229,6 +229,53 @@ def test_spectrogram_window_is_recorded():
         assert row["width"] > 0 and row["height"] > 0
 
 
+def test_distance_profile_only_covers_label_blind_models():
+    """F-12 / G-04: 地理の図にラベルを見たモデルを載せない。"""
+    prof = load("distance_profile.json")
+    blind = {
+        m["model_id"] for m in load("models.json")["models"]
+        if not m["saw_country_labels"]
+    }
+    listed = {m["model_id"] for m in prof["models"]}
+    assert listed, "distance_profile.json にモデルが 1 つも無い"
+    assert listed <= blind, f"ラベルを見たモデルが混じっている: {sorted(listed - blind)}"
+
+
+def test_distance_profile_suppresses_thin_bands():
+    """対の数が足りない束は値を出さないこと。
+
+    少数の対が線を暴れさせるのを防ぐ仕掛けなので、
+    **効いていること**を確かめる(閾値を書いただけでは効かない)。
+    """
+    prof = load("distance_profile.json")
+    floor = prof["min_pairs_per_band"]
+    for m in prof["models"]:
+        for b in m["bands"]:
+            for key in ("same", "diff"):
+                s = b[key]
+                if s["n"] < floor:
+                    assert s["mean"] is None, (
+                        f"{m['model_id']} / {b['label']} / {key}: "
+                        f"{s['n']} 対しかないのに値が出ている"
+                    )
+                else:
+                    assert s["mean"] is not None
+
+
+def test_distance_profile_bands_cover_every_pair():
+    """束の合計が対の総数と一致すること(取りこぼし・二重計上の検出)。"""
+    prof = load("distance_profile.json")
+    for m in prof["models"]:
+        total = sum(b["n"] for b in m["bands"])
+        assert total == m["n_pairs"], (
+            f"{m['model_id']}: 束の合計 {total} が対の総数 {m['n_pairs']} と違う"
+        )
+        for b in m["bands"]:
+            assert b["same"]["n"] + b["diff"]["n"] == b["n"], (
+                f"{m['model_id']} / {b['label']}: 同/異の合計が束の数と違う"
+            )
+
+
 def test_no_non_finite_numbers_in_features():
     for f in load("features.json")["items"]:
         for k, v in f.items():

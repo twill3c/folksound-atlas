@@ -62,38 +62,40 @@ async function checkOverflow(page, label) {
   }
 }
 
-/** 図の中身が viewBox に収まっているかを測る(HC-159 / T-022)。 */
+/** 図の中身が実際に描かれている枠に収まっているかを測る(HC-159 / T-022)。
+ *
+ * **`getBBox()` を使わない。** あれは *変換前* の箱を返すので、
+ * `transform="rotate(...)"` の付いた要素のはみ出しを見逃す。
+ * 実際にこの図で、回した軸ラベルが切れているのに検査が緑のまま通った(2026-09-10)。
+ * 描画後の実寸(`getBoundingClientRect`)を SVG 自身の実寸と比べる。
+ */
 async function checkSvgGeometry(page, selector, label) {
   const info = await page.evaluate((sel) => {
     const svg = document.querySelector(sel);
     if (!svg) return null;
-    const vb = svg.viewBox.baseVal;
+    const sr = svg.getBoundingClientRect();
+    const tol = 1.0;
     const out = [];
-    for (const el of svg.querySelectorAll("text, path, rect, circle")) {
-      let b;
-      try {
-        b = el.getBBox();
-      } catch {
-        continue;
-      }
-      if (b.width === 0 && b.height === 0) continue;
+    for (const el of svg.querySelectorAll("text, path, rect, circle, polyline")) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
       const overflow =
-        b.x < vb.x - 0.5 ||
-        b.y < vb.y - 0.5 ||
-        b.x + b.width > vb.x + vb.width + 0.5 ||
-        b.y + b.height > vb.y + vb.height + 0.5;
+        r.left < sr.left - tol ||
+        r.top < sr.top - tol ||
+        r.right > sr.right + tol ||
+        r.bottom > sr.bottom + tol;
       if (overflow) {
         out.push({
           tag: el.tagName,
           text: (el.textContent || "").slice(0, 24),
-          x: Math.round(b.x),
-          y: Math.round(b.y),
-          w: Math.round(b.width),
-          h: Math.round(b.height),
+          x: Math.round(r.left - sr.left),
+          y: Math.round(r.top - sr.top),
+          w: Math.round(r.width),
+          h: Math.round(r.height),
         });
       }
     }
-    return { vb: { x: vb.x, y: vb.y, w: vb.width, h: vb.height }, out };
+    return { vb: { w: Math.round(sr.width), h: Math.round(sr.height) }, out };
   }, selector);
 
   if (!info) {
@@ -103,8 +105,8 @@ async function checkSvgGeometry(page, selector, label) {
   if (info.out.length > 0) {
     for (const o of info.out.slice(0, 5)) {
       fail(
-        `${label}: viewBox からはみ出し <${o.tag}> "${o.text}" ` +
-          `at (${o.x},${o.y}) ${o.w}x${o.h} / viewBox ${info.vb.w}x${info.vb.h}`,
+        `${label}: 図の枠からはみ出し <${o.tag}> "${o.text}" ` +
+          `at (${o.x},${o.y}) ${o.w}x${o.h} / 枠 ${info.vb.w}x${info.vb.h}`,
       );
     }
   } else {
@@ -179,6 +181,7 @@ async function run() {
         ["/", "ホーム"],
         ["/map/", "世界地図"],
         ["/space/", "音響空間"],
+        ["/distance/", "地理と音響"],
         ["/models/", "モデル"],
         ["/about/", "About"],
       ]) {
@@ -194,6 +197,19 @@ async function run() {
           if (land === 0) fail(`世界地図@${width}: 陸地が描かれていない`);
           else ok(`世界地図@${width}: 陸地 ${land} 面`);
           await checkSvgGeometry(page, ".worldmap__svg", `世界地図@${width}`);
+        }
+
+        if (path === "/distance/") {
+          await page.waitForTimeout(400);
+          // 層ごとに数える(HC-228)。線・点・目盛がそれぞれ在ることを見る
+          const charts = await page.locator(".dprof__svg").count();
+          const lines = await page.locator(".dprof__svg polyline").count();
+          const dots = await page.locator(".dprof__svg circle").count();
+          if (charts === 0) fail(`地理と音響@${width}: 図が 0 枚`);
+          else if (lines === 0) fail(`地理と音響@${width}: 折れ線が 0 本`);
+          else if (dots === 0) fail(`地理と音響@${width}: 点が 0 個`);
+          else ok(`地理と音響@${width}: 図 ${charts} / 線 ${lines} / 点 ${dots}`);
+          await checkSvgGeometry(page, ".dprof__svg", `地理と音響@${width}`);
         }
 
         if (path === "/space/") {
@@ -233,6 +249,9 @@ async function run() {
         <div style="width:3000px;height:40px">わざと横に溢れさせた頁</div>
         <svg class="soundspace__svg" viewBox="0 0 100 100" width="400" height="400">
           <text x="180" y="50">はみ出したラベル</text>
+          <!-- 回して切れる例。**getBBox では捕まらない**(変換前の箱は枠内にある)。
+               2026-09-10 に実物で見逃したので、対照に加えた。 -->
+          <text x="20" y="96" transform="rotate(-38 20 96)">回して切れるラベル</text>
           <circle cx="50" cy="50" r="3"></circle>
           <circle cx="50" cy="50" r="3"></circle>
         </svg>
@@ -244,7 +263,8 @@ async function run() {
       const caught = failures.length - before;
       // 対照で出た失敗は本物の失敗ではないので取り除く
       failures.length = before;
-      if (caught >= 3) {
+      // 回したラベルぶんを含めて 4 件は捕まえるはず
+      if (caught >= 4) {
         ok(`陽性対照: 壊した頁を ${caught} 件で捕まえた(検品器は働いている)`);
       } else {
         fail(`陽性対照: 壊した頁を ${caught} 件しか捕まえなかった。検品器が働いていない`);

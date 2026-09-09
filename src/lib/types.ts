@@ -155,6 +155,47 @@ export interface AnalysisFile {
   results: AnalysisResult[];
 }
 
+export interface BandStat {
+  n: number;
+  mean: number | null;
+  p25: number | null;
+  p75: number | null;
+}
+
+export interface DistanceBand {
+  label: string;
+  lo_km: number;
+  hi_km: number;
+  n: number;
+  same: BandStat;
+  diff: BandStat;
+}
+
+export interface FarButClosePair {
+  a: { id: string; title: string; country: string };
+  b: { id: string; title: string; country: string };
+  geo_km: number;
+  acoustic_distance: number;
+  same_uploader: boolean;
+}
+
+export interface DistanceModel {
+  model_id: string;
+  model_name: string;
+  n_recordings: number;
+  n_pairs: number;
+  n_same_uploader_pairs: number;
+  bands: DistanceBand[];
+  far_but_close: FarButClosePair[];
+}
+
+export interface DistanceProfileFile {
+  generated_at: string;
+  min_pairs_per_band: number;
+  note: string;
+  models: DistanceModel[];
+}
+
 export interface Manifest {
   dataset_version: string;
   generated_at: string;

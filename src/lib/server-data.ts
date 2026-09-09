@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type {
   AnalysisFile,
+  DistanceProfileFile,
   FeatureRow,
   Manifest,
   ModelInfo,
@@ -48,6 +49,10 @@ export function getFeatures(): Map<string, FeatureRow> {
 export function getWaveforms(): Map<string, WaveformRow> {
   const f = readJson<{ items: WaveformRow[] }>("waveforms.json");
   return new Map((f?.items ?? []).map((r) => [r.id, r]));
+}
+
+export function getDistanceProfile(): DistanceProfileFile | null {
+  return readJson<DistanceProfileFile>("distance_profile.json");
 }
 
 export function getSpectrograms(): SpectrogramFile | null {

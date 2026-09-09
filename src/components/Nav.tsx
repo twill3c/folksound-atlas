@@ -4,6 +4,7 @@ const ITEMS: { href: string; label: string }[] = [
   { href: "/", label: "ホーム" },
   { href: "/map/", label: "世界地図" },
   { href: "/space/", label: "音響空間" },
+  { href: "/distance/", label: "地理と音響" },
   { href: "/models/", label: "モデル" },
   { href: "/about/", label: "この地図帳について" },
 ];
