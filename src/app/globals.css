@@ -292,6 +292,29 @@ th { color: var(--ink-2); font-weight: 600; }
 .wave__axis { stroke: var(--rule-2); stroke-width: 0.6; }
 .wave__tick { font-size: 10px; fill: var(--ink-3); }
 
+/* ---- 類似ネットワーク ---- */
+.netview__svg { width: 100%; min-width: 560px; height: auto; display: block; }
+.netview__bg { fill: #fffdf8; stroke: var(--rule); }
+.netview__edge { stroke: var(--rule-2); stroke-width: 0.8; opacity: 0.55; }
+.netview__edge.is-on { stroke: var(--ink-2); stroke-width: 1.6; opacity: 1; }
+.netview__node {
+  cursor: pointer;
+  fill-opacity: 0.85;
+  stroke: #fffdf8;
+  stroke-width: 1;
+}
+.netview__node.is-on { fill-opacity: 1; stroke: var(--ink); stroke-width: 1.8; }
+.netview__node.is-isolated { fill-opacity: 0.4; }
+.netview__readout {
+  font-size: 13px;
+  color: var(--ink-2);
+  margin: 8px 0 0;
+  min-height: 1.5em;
+}
+.netview__table { margin-top: 14px; font-size: 13.5px; }
+.netview__table summary { cursor: pointer; color: var(--geo); }
+.netview__table summary:hover { color: var(--aco); }
+
 /* ---- 地理距離 × 音響距離 ---- */
 .dprof__svg { width: 100%; min-width: 560px; height: auto; display: block; }
 .dprof__grid { stroke: var(--rule); stroke-width: 0.7; }

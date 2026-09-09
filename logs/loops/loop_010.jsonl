@@ -1,0 +1,1 @@
+{"v": "1.2", "ts": "2026-09-10T05:24:55+09:00", "project": "folksound-atlas", "loop_id": "loop_010", "event": "loop_start", "data": {"goal": "類似ネットワーク(仕様書 §69 / §127 の最後の未実装項目)", "spec_refs": ["F-07", "§69"], "scaffold_version": "1.30.0", "agent": "claude-code", "model": "claude-opus-5"}}

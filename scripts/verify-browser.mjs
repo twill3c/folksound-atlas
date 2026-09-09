@@ -182,6 +182,7 @@ async function run() {
         ["/map/", "世界地図"],
         ["/space/", "音響空間"],
         ["/distance/", "地理と音響"],
+        ["/network/", "類似ネットワーク"],
         ["/models/", "モデル"],
         ["/about/", "About"],
       ]) {
@@ -197,6 +198,18 @@ async function run() {
           if (land === 0) fail(`世界地図@${width}: 陸地が描かれていない`);
           else ok(`世界地図@${width}: 陸地 ${land} 面`);
           await checkSvgGeometry(page, ".worldmap__svg", `世界地図@${width}`);
+        }
+
+        if (path === "/network/") {
+          // データを fetch してから描くので、要素が出るまで待つ
+          await page.waitForSelector(".netview__svg circle", { timeout: 20000 })
+            .catch(() => {});
+          const nodes = await page.locator(".netview__svg circle").count();
+          const edges = await page.locator(".netview__svg line").count();
+          if (nodes === 0) fail(`類似ネットワーク@${width}: 節点が 0 個`);
+          else if (edges === 0) fail(`類似ネットワーク@${width}: 辺が 0 本`);
+          else ok(`類似ネットワーク@${width}: 節点 ${nodes} / 辺 ${edges}`);
+          await checkSvgGeometry(page, ".netview__svg", `類似ネットワーク@${width}`);
         }
 
         if (path === "/distance/") {

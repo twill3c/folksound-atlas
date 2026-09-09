@@ -17,6 +17,7 @@ const TARGETS = [
   ["/map/", "map", [0, 620]],
   ["/space/", "space", [0, 640]],
   ["/distance/", "distance", [0, 620, 1240, 1900]],
+  ["/network/", "network", [0, 400]],
   ["/models/", "models", [0, 700, 1400]],
   ["/about/", "about", [0, 900]],
   ["/song/folk_000001/", "song", [0, 700, 1400]],

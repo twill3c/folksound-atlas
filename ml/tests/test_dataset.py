@@ -276,6 +276,64 @@ def test_distance_profile_bands_cover_every_pair():
             )
 
 
+def test_network_edges_are_mutual_and_consistent():
+    """仕様書 §69: 辺は相互 k 近傍。節点集合が songs と一致すること。"""
+    songs = {s["id"] for s in load("songs.json")["songs"]}
+    checked = 0
+    for m in load("models.json")["models"]:
+        p = DATA / f"network_{m['model_id']}.json"
+        if not p.exists():
+            continue
+        checked += 1
+        net = json.loads(p.read_text(encoding="utf-8"))
+        ids = {n["id"] for n in net["nodes"]}
+        assert ids <= songs, f"{p.name}: songs に無い節点がある"
+        # 辺の端点は必ず節点集合の中
+        for e in net["edges"]:
+            assert e["a"] in ids and e["b"] in ids, f"{p.name}: 辺の端点が節点に無い"
+        # 無向グラフなので同じ組を二度出さない
+        pairs = [(e["a"], e["b"]) for e in net["edges"]]
+        assert all(a < b for a, b in pairs), f"{p.name}: 辺の向きが正規化されていない"
+        assert len(set(pairs)) == len(pairs), f"{p.name}: 辺が重複している"
+        # 次数は辺から数え直したものと一致すること
+        from collections import Counter
+
+        deg = Counter()
+        for a, b in pairs:
+            deg[a] += 1
+            deg[b] += 1
+        for n in net["nodes"]:
+            assert n["deg"] == deg.get(n["id"], 0), (
+                f"{p.name}: {n['id']} の次数が辺と食い違う"
+            )
+    assert checked > 0, "ネットワークが 1 つも無く、この検査は何も見ていない"
+
+
+def test_network_edge_composition_reports_chance_baseline():
+    """**生の割合だけを出さない**こと。
+
+    国は 37 種・投稿者は 122 種なので、でたらめに辺を張っても国のほうが揃いやすい。
+    偶然比を出さずに割合だけ並べると、逆の結論に読めてしまう
+    (実測 2026-09-10: 生では国 43.3% > 投稿者 39.0% だが、
+     偶然比では国 9.3x < 投稿者 13.9x)。
+    """
+    for m in load("models.json")["models"]:
+        p = DATA / f"network_{m['model_id']}.json"
+        if not p.exists():
+            continue
+        c = json.loads(p.read_text(encoding="utf-8"))["edge_composition"]
+        for key in ("same_country_chance", "same_uploader_chance",
+                    "same_country_lift", "same_uploader_lift"):
+            assert c.get(key) is not None, f"{p.name}: {key} が無い"
+        # 偶然の確率は 0 より大きく 1 未満
+        assert 0 < c["same_country_chance"] < 1
+        assert 0 < c["same_uploader_chance"] < 1
+        # lift = ratio / chance が成り立っていること(数の整合)
+        assert c["same_country_lift"] == pytest.approx(
+            c["same_country_ratio"] / c["same_country_chance"], rel=0.02
+        )
+
+
 def test_no_non_finite_numbers_in_features():
     for f in load("features.json")["items"]:
         for k, v in f.items():

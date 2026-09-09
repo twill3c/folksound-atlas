@@ -7,6 +7,7 @@ import type {
   FeatureRow,
   Manifest,
   ModelInfo,
+  NetworkFile,
   ProjectionFile,
   SimilarityRow,
   Song,
@@ -49,6 +50,10 @@ export function getFeatures(): Map<string, FeatureRow> {
 export function getWaveforms(): Map<string, WaveformRow> {
   const f = readJson<{ items: WaveformRow[] }>("waveforms.json");
   return new Map((f?.items ?? []).map((r) => [r.id, r]));
+}
+
+export function getNetwork(modelId: string): NetworkFile | null {
+  return readJson<NetworkFile>(`network_${modelId}.json`);
 }
 
 export function getDistanceProfile(): DistanceProfileFile | null {

@@ -196,6 +196,47 @@ export interface DistanceProfileFile {
   models: DistanceModel[];
 }
 
+export interface NetworkNode {
+  id: string;
+  x: number;
+  y: number;
+  deg: number;
+  country: string;
+  uploader: string;
+  title: string;
+}
+
+export interface EdgeComposition {
+  same_country: number;
+  same_country_ratio: number;
+  same_country_chance: number;
+  same_country_lift: number | null;
+  same_uploader: number;
+  same_uploader_ratio: number;
+  same_uploader_chance: number;
+  same_uploader_lift: number | null;
+  uploader_lift_exceeds_country: boolean | null;
+  note: string;
+}
+
+export interface NetworkFile {
+  model: string;
+  model_name: string;
+  saw_country_labels: boolean;
+  k: number;
+  seed: number;
+  edge_rule: string;
+  n_nodes: number;
+  n_edges: number;
+  n_isolated: number;
+  components: number[];
+  n_components: number;
+  largest_component: number;
+  edge_composition: EdgeComposition;
+  nodes: NetworkNode[];
+  edges: { a: string; b: string; w: number }[];
+}
+
 export interface Manifest {
   dataset_version: string;
   generated_at: string;
