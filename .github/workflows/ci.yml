@@ -13,10 +13,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
       - name: Install deps
+        # requirements.txt は手元の実環境をそのまま固定しており、torch / torchaudio は
+        # PyTorch の CPU 用インデックスにしか無い `+cpu` 版を指している。
+        # PyPI だけを見ると `torch==2.14.0+cpu` が見つからず、ここで落ちる。
+        # 実測 2026-09-14: この CI は最初の 1 回目から 22 回連続でこのステップで失敗しており、
+        # テストは一度も走っていなかった。
+        # `+cpu` を外すと Linux では数 GB の CUDA 版を取りに行くので、索引を足すほうを選ぶ。
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
       - name: pytest
         run: python -m pytest -q
       - name: 字種・制御文字の検査(G-10)
@@ -37,3 +44,15 @@ jobs:
         run: npm run typecheck
       - name: build(静的書き出し)
         run: npm run build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ホームの数が JSON から導かれているか(T-019)
+        # T-019 は配られる out/index.html を読むので、build の後でしか意味を持たない。
+        # python ジョブには out/ が無く、そちらでは skip される。
+        # **skip は緑に見える**ので、書き出しが無ければ pytest を呼ぶ前にこの手順ごと落とす。
+        # この検査は標準ライブラリと pytest だけで動く。
+        run: |
+          test -f out/index.html || { echo "out/index.html が無い(build の出力先が変わった?)"; exit 1; }
+          pip install pytest==9.1.1
+          python -m pytest ml/tests/test_home_derived.py -q -p no:cacheprovider
