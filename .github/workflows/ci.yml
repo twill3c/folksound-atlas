@@ -25,7 +25,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
       - name: pytest
-        run: python -m pytest -q
+        # -rs: skip の理由をログに出す。**skip は緑に見える**ので、何が CI で走っていないかを
+        # 毎回読める形で残す(HC-270)。git に入れない成果物を読む検査は CI では skip になる。
+        run: python -m pytest -q -rs
       - name: 字種・制御文字の検査(G-10)
         run: python harness/text_hygiene.py
       - name: ループログの検証(LL-11)

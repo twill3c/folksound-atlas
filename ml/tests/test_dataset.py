@@ -127,6 +127,18 @@ def test_analysis_excludes_label_seeing_models():
 def test_embeddings_are_l2_normalized():
     """T-015 / F-07。"""
     models = load("models.json")["models"]
+    # 生の Embedding は配らない(N-03)ので git に入っておらず、ETL を回した手元にしか無い。
+    # CI の checkout では data/embeddings/ に .gitkeep しか無く、ここが 0 件になる
+    # (実測 2026-09-14: CI が初めて pytest まで進んだ回に、この検査だけが落ちた)。
+    # **「成果物がこの環境に無い」と「在るのに 1 件も照合できない」は別物として扱う。**
+    #   前者は理由を明示して skip、後者は失敗(HC-041: 何も見ていない検査を緑にしない)。
+    # 仕組みそのもの(embed() が L2 正規化して返すこと)は test_models.py が CI でも検査する。
+    present = sorted(EMB.glob("embedding_*.json"))
+    if not present:
+        pytest.skip(
+            "data/embeddings/ に Embedding が無い(git に入れない ETL の成果物。"
+            "07_embeddings.py を回した手元でだけ検査する)"
+        )
     checked = 0
     for m in models:
         p = EMB / f"embedding_{m['model_id']}.json"
@@ -138,9 +150,11 @@ def test_embeddings_are_l2_normalized():
         for it in d["items"][:40]:
             n = math.sqrt(sum(v * v for v in it["embedding"]))
             assert abs(n - 1.0) < 1e-4, f"{m['model_id']}/{it['id']} のノルムが {n}"
-    # 走査対象が空でないことを別に確かめる(HC-041)。
-    # 0 件でも「違反 0」になってしまう検査を残さない。
-    assert checked > 0, "Embedding ファイルが 1 つも見つからず、この検査は何も見ていない"
+    # ファイルは在るのに models.json と 1 件も対応しないなら、検査が働いていない(HC-041)
+    assert checked > 0, (
+        f"Embedding ファイルは {len(present)} 個在るのに models.json のどれとも対応せず、"
+        "この検査は何も見ていない"
+    )
 
 
 def test_similarity_is_sorted_and_excludes_self():
