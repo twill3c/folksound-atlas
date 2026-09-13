@@ -1,16 +1,33 @@
 import Link from "next/link";
 
 import Nav from "@/components/Nav";
-import { getAnalysis, getManifest } from "@/lib/server-data";
+import { getAnalysis, getManifest, getNetwork } from "@/lib/server-data";
 
 export default function Home() {
   const manifest = getManifest();
   const analysis = getAnalysis();
 
-  // 目玉の見出しは **測定結果の JSON から導く**。手書きしない(F-15 / T-019)。
-  const headline = analysis?.results.find(
-    (r) => !r.saw_country_labels && r.headline_supported !== undefined,
+  // 目玉の見出しは **測定結果の JSON から数え上げて導く**。手書きしない(F-15 / T-019)。
+  // 一つのモデルの判定だけを拾うと、他の物差しと食い違ったときに黙って片方を捨てることになる。
+  // そこで国ラベルを見ていない全モデルについて、物差しごとに「投稿者が国を上回ったか」を数える。
+  const blind = (analysis?.results ?? []).filter(
+    (r) => !r.saw_country_labels && r.geo_vs_acoustic,
   );
+  const alpha = blind[0]?.alpha ?? 0.05;
+  const nBlind = blind.length;
+  const nHeadline = blind.filter((r) => r.headline_supported).length;
+  const nProvSig = blind.filter(
+    (r) => (r.provenance_vs_acoustic?.p ?? 1) < alpha,
+  ).length;
+  const nAriUploader = blind.filter(
+    (r) => r.clustering?.uploader_beats_country,
+  ).length;
+  const nets = blind
+    .map((r) => getNetwork(r.model_id))
+    .filter((n): n is NonNullable<typeof n> => n != null);
+  const nNetUploader = nets.filter(
+    (n) => n.edge_composition.uploader_lift_exceeds_country,
+  ).length;
 
   return (
     <>
@@ -46,37 +63,53 @@ export default function Home() {
             </p>
           )}
 
-          {headline && (
+          {nBlind > 0 && (
             <div
               className="card"
               style={{ marginTop: 24, borderLeft: "4px solid var(--aco)" }}
             >
               <h2 style={{ marginTop: 0, fontSize: 17 }}>測ってみた答え</h2>
-              <p style={{ fontSize: 15, marginBottom: 8 }}>
-                {headline.headline_supported ? (
+              <p style={{ fontSize: 15, marginBottom: 10 }}>
+                {nHeadline === 0 ? (
                   <>
-                    地理的に近い録音は、音響的にも近い傾向がありました。
-                    しかもその傾向は、録音の出自(どのアーカイブがデジタル化したか)を
-                    差し引いても残っています。
-                  </>
-                ) : headline.H01_supported ? (
-                  <>
-                    <strong>相関は出ましたが、目玉は立ちませんでした。</strong>
-                    地理的に近い録音は音響的にも近く見えるものの、
-                    その見かけは<strong>録音の出自</strong>
-                    (どのアーカイブが同じ機材でデジタル化したか)で
-                    説明できてしまい、地理を測ったとは言えませんでした。
+                    <strong>目玉は立ちませんでした。</strong>
+                    国名を教わっていない {nBlind} つのモデルのどれでも、
+                    地理的な近さが音響的な近さを説明するとは言えませんでした。
                   </>
                 ) : (
                   <>
-                    <strong>目玉は立ちませんでした。</strong>
-                    この標本では、地理的な近さと音響的な近さのあいだに
-                    主張できるほどの関係は見つかりませんでした。
+                    国名を教わっていない {nBlind} つのモデルのうち {nHeadline} つで、
+                    地理的な近さが録音の出自を差し引いても音響的な近さを説明していました。
                   </>
                 )}
               </p>
+              <p style={{ fontSize: 14.5, marginBottom: 8 }}>
+                かわりに見えたのは<strong>録音の出自</strong>
+                (どのアーカイブが同じ機材でデジタル化したか)です。
+                物差しを替えて測り直しても、向きは変わりませんでした。
+              </p>
+              <ul className="home-evidence">
+                <li>
+                  距離の相関 —— 出自との相関が有意だったモデル{" "}
+                  <strong>
+                    {nProvSig} / {nBlind}
+                  </strong>
+                </li>
+                <li>
+                  群れの切り方(ARI)—— 国より投稿者でよく揃ったモデル{" "}
+                  <strong>
+                    {nAriUploader} / {nBlind}
+                  </strong>
+                </li>
+                <li>
+                  類似ネットワーク(偶然比)—— 国より投稿者を強く繋いだモデル{" "}
+                  <strong>
+                    {nNetUploader} / {nets.length}
+                  </strong>
+                </li>
+              </ul>
               <p className="note" style={{ fontSize: 13 }}>
-                この文は、測定結果の JSON から選ばれています。
+                この文と数は、測定結果の JSON から数え上げています。
                 都合のよい結果が出たときだけ書く、ということをしないためです。{" "}
                 <Link href="/models/">数字を見る →</Link>
               </p>
@@ -124,6 +157,7 @@ export default function Home() {
           </section>
 
           <section style={{ marginTop: 30 }}>
+            <h2 style={{ fontSize: 20, marginBottom: 12 }}>見て回る</h2>
             <div className="grid">
               <div className="card">
                 <h3 style={{ fontSize: 15, marginTop: 0 }}>
@@ -140,6 +174,23 @@ export default function Home() {
                 <p style={{ fontSize: 14, color: "var(--ink-2)", margin: 0 }}>
                   Embedding を 2 次元へ潰した散布図。国で色分けするか、
                   投稿者で色分けするかを切り替えられます。
+                </p>
+              </div>
+              <div className="card">
+                <h3 style={{ fontSize: 15, marginTop: 0 }}>
+                  <Link href="/distance/">地理と音響 →</Link>
+                </h3>
+                <p style={{ fontSize: 14, color: "var(--ink-2)", margin: 0 }}>
+                  離れているほど音は違うのか。同じ投稿者と違う投稿者の二本の線で、
+                  答えが図として見えます。
+                </p>
+              </div>
+              <div className="card">
+                <h3 style={{ fontSize: 15, marginTop: 0 }}>
+                  <Link href="/network/">類似ネットワーク →</Link>
+                </h3>
+                <p style={{ fontSize: 14, color: "var(--ink-2)", margin: 0 }}>
+                  音響的に近いものどうしを線で結ぶと、何のかたまりが見えるか。
                 </p>
               </div>
               <div className="card">

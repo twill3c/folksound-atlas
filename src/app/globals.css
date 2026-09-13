@@ -292,6 +292,22 @@ th { color: var(--ink-2); font-weight: 600; }
 .wave__axis { stroke: var(--rule-2); stroke-width: 0.6; }
 .wave__tick { font-size: 10px; fill: var(--ink-3); }
 
+/* ---- ホームの「測ってみた答え」の裏づけ ---- */
+.home-evidence {
+  margin: 4px 0 12px;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.9;
+}
+/* 「3 / 3」の空白で改行されると、狭い幅で分数が二行に割れて読めなくなる
+   (実測 2026-09-14: 480px で「…モデル 3」と「/ 3」に割れた。検品器は溢れを見るので緑のまま)。 */
+.home-evidence strong {
+  color: var(--ink);
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
 /* ---- 類似ネットワーク ---- */
 .netview__svg { width: 100%; min-width: 560px; height: auto; display: block; }
 .netview__bg { fill: #fffdf8; stroke: var(--rule); }
